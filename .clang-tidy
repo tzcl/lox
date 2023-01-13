@@ -12,9 +12,13 @@ Checks: "*,
         -readability-static-accessed-through-instance,
         -readability-avoid-const-params-in-decls,
         -cppcoreguidelines-non-private-member-variables-in-classes,
-        -misc-non-private-member-variables-in-classes,
-"
+        -misc-non-private-member-variables-in-classes"
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     none
+CheckOptions:
+  - key: readability-identifier-length.MinimumVariableNameLength
+    value: 0
+  - key: readability-identifier-length.MinimumParameterNameLength
+    value: 0
 ...

@@ -8,3 +8,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 project(lox
   DESCRIPTION "An implementation of the Lox language in C++"
   LANGUAGES CXX)
+
+add_executable(lox lox/main.cpp)
+
+target_include_directories(lox PUBLIC ${lox_SOURCE_DIR})
+
+find_package(fmt)
+target_link_libraries(lox fmt::fmt)
