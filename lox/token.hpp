@@ -3,6 +3,8 @@
 #include <string>
 #include <variant>
 
+#undef EOF
+
 namespace lox {
 
 // clang-format off

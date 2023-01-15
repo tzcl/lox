@@ -33,20 +33,24 @@ void run_file(std::string const& path) {
 }
 
 void run_prompt() {
+  fmt::print("Running prompt\n");
   std::string line;
-  while (std::getline(std::cin, line)) {
+  while (true) {
     fmt::print("> ");
+    std::getline(std::cin, line);
+    if (line.empty()) break;
     run(line);
   }
 }
 
 int main(int argc, char* argv[]) {
   fmt::print("hello, world!\n");
+  fmt::print("{}, {}\n", argc, argc > 0 ? argv[0] : "");
 
-  if (argc > 1) {
+  if (argc > 2) {
     fmt::print("Usage: lox [script]\n");
     return EX_USAGE;
-  } else if (argc == 1) {
+  } else if (argc == 2) {
     run_file(argv[0]);
   } else {
     run_prompt();
