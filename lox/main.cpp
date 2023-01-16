@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <fmt/core.h>
 #include <fstream>
 #include <iostream>
@@ -6,14 +7,15 @@
 #include <string_view>
 #include <sysexits.h>
 
+#include <lox/scanner.hpp>
 #include <lox/token.hpp>
 
-void run(std::string_view source) {
-  // lox::scanner scanner(source);
+void run(std::string const& source) {
+  lox::scanner scanner(source);
 
-  // for (lox::token const& token : scanner.tokens()) {
-  //   fmt::print("{}\n", token);
-  // }
+  for (lox::token const& token : scanner.tokens()) {
+    fmt::print("{}\n", token.str());
+  }
 }
 
 // Pass by const reference because we want a non-owning view

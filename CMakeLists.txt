@@ -20,7 +20,9 @@ project(lox
   LANGUAGES CXX)
 add_compile_options("-v")
 
-add_executable(lox lox/main.cpp)
+set(SOURCES lox/main.cpp lox/token.cpp lox/scanner.cpp)
+
+add_executable(lox ${SOURCES})
 
 target_include_directories(lox PUBLIC ${lox_SOURCE_DIR})
 

@@ -1,30 +1,19 @@
 #pragma once
 
 #include <lox/token.hpp>
-#include <string_view>
-#include <unordered_map>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace lox {
 class scanner {
 public:
-  const std::unordered_map<std::string_view, token_type> keywords = {
-      {"and", token_type::AND},       {"class", token_type::CLASS},
-      {"else", token_type::ELSE},     {"false", token_type::FALSE},
-      {"for", token_type::FOR},       {"fun", token_type::FUN},
-      {"if", token_type::IF},         {"nil", token_type::NIL},
-      {"or", token_type::OR},         {"print", token_type::PRINT},
-      {"return", token_type::RETURN}, {"super", token_type::SUPER},
-      {"this", token_type::THIS},     {"true", token_type::TRUE},
-      {"var", token_type::VAR},       {"while", token_type::WHILE},
-  };
+  explicit scanner(std::string source) : source_(std::move(source)) {}
 
-  explicit scanner(std::string_view source) : source_(source) {}
-
-  auto scan() -> std::vector<token>;
+  auto tokens() -> std::vector<token>;
 
 private:
-  void scan_token();
+  void scan();
 
   void string();
   void number();
@@ -48,11 +37,13 @@ private:
 
   inline void add_token(token_type type,
                         token_literal const& literal = token_literal()) {
-    tokens_.emplace_back(type, source_.substr(start_, size_()), line_,
+    tokens_.emplace_back(type, substr(start_, curr_), line_,
                          literal);
   }
 
-  inline auto size_() const -> int { return curr_ - start_; };
+  inline auto substr(int start, int end) -> std::string {
+    return source_.substr(start, end - start);
+  }
 
   static inline auto is_digit(char c) -> bool { return c >= '0' && c <= '9'; }
   static inline auto is_alpha(char c) -> bool {
@@ -62,7 +53,7 @@ private:
     return is_alpha(c) || is_digit(c);
   }
 
-  std::string_view const source_;
+  std::string const source_;
   std::vector<token> tokens_;
 
   int start_ = 0;

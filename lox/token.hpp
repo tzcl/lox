@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <variant>
 
@@ -26,9 +27,10 @@ enum class token_type {
   AND, CLASS, ELSE, FALSE, FUN, FOR, IF, NIL, OR,
   PRINT, RETURN, SUPER, THIS, TRUE, VAR, WHILE,
   
-  EOF
+  EOF,
+  
+  NUM_TYPES
 };
-// clang-format on
 
 // TODO: do I really want a variant here?
 // std::monostate here is a well-behaved empty alternative. Putting it first
