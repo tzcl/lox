@@ -43,7 +43,7 @@ void run_prompt() {
   }
 }
 
-int main(int argc, char* argv[]) {
+auto main(int argc, char* argv[]) -> int {
   fmt::print("hello, world!\n");
   fmt::print("{}, {}\n", argc, argc > 0 ? argv[0] : "");
 

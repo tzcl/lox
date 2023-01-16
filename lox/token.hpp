@@ -30,15 +30,19 @@ enum class token_type {
 };
 // clang-format on
 
-using token_literal = std::variant<std::string, int>;
+// TODO: do I really want a variant here?
+// std::monostate here is a well-behaved empty alternative. Putting it first
+// allows for token_literal to be default-constructed.
+using token_literal = std::variant<std::monostate, std::string, double>;
 
 struct token {
   token_type const type_;
   std::string const lexeme_;
-  token_literal const literal_;
   int const line_;
+  token_literal const literal_;
 
-  token(token_type type, std::string lexeme, token_literal literal, int line);
+  token(token_type type, std::string lexeme, int line,
+        token_literal literal = token_literal());
 
   [[nodiscard]] auto str() const -> std::string;
 };
