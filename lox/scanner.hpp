@@ -52,7 +52,7 @@ private:
     return is_alpha(c) || is_digit(c);
   }
   
-  void find_closing_tag();
+  void skip_block_comment();
 
   std::string const source_;
   std::vector<token> tokens_;

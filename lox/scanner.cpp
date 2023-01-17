@@ -38,13 +38,28 @@ auto scanner::tokens() -> std::vector<token> {
   return tokens_;
 }
 
-void scanner::find_closing_tag() {
+void scanner::skip_block_comment() {
   // Naive implementation searches for the closing */ but that may overlap
   // a nested comment!
   // Idea: keep track of the levels of nesting
   for (int depth = 1; depth > 0;) {
-    if (match('/') && peek() == '*') ++depth;
-    if (match('*') && peek() == '/') --depth;
+    if (done()) {
+      lox::error(line_, "Unterminated block comment");
+      return;
+    }
+
+    if (match('/') && peek() == '*') {
+      next();
+      ++depth;
+      continue;
+    }
+
+    if (match('*') && peek() == '/') {
+      next();
+      --depth;
+      continue;
+    }
+
     next();
   }
 }
@@ -86,7 +101,7 @@ void scanner::scan() {
       while (peek() != '\n' && !done()) next();
     } else if (match('*')) {
       // Find closing */
-      find_closing_tag();
+      skip_block_comment();
     } else {
       add_token(SLASH);
     }
