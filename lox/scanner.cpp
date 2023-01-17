@@ -1,3 +1,4 @@
+#include "lox/error.hpp"
 #include <fmt/core.h>
 #include <lox/scanner.hpp>
 #include <unordered_map>
@@ -37,6 +38,17 @@ auto scanner::tokens() -> std::vector<token> {
   return tokens_;
 }
 
+void scanner::find_closing_tag() {
+  // Naive implementation searches for the closing */ but that may overlap
+  // a nested comment!
+  // Idea: keep track of the levels of nesting
+  for (int depth = 1; depth > 0;) {
+    if (match('/') && peek() == '*') ++depth;
+    if (match('*') && peek() == '/') --depth;
+    next();
+  }
+}
+
 void scanner::scan() {
   char c = next();
   using enum lox::token_type; // C++20 addition!
@@ -71,9 +83,10 @@ void scanner::scan() {
   case '/':
     if (match('/')) {
       // A comment goes until the end of the line
-      // TODO: Implement C-style /* ... */ block comments. Allow nesting.
-      while (peek() != '\n' && !done())
-        next();
+      while (peek() != '\n' && !done()) next();
+    } else if (match('*')) {
+      // Find closing */
+      find_closing_tag();
     } else {
       add_token(SLASH);
     }
@@ -89,9 +102,7 @@ void scanner::scan() {
     break;
 
   case 'o':
-    if (match('r')) {
-      add_token(OR);
-    }
+    if (match('r')) { add_token(OR); }
     break;
 
   default:
@@ -100,6 +111,8 @@ void scanner::scan() {
       number();
     } else if (is_alpha(c)) {
       identifier();
+    } else {
+      lox::error(line_, fmt::format("Unexpected character: {}", c));
     }
     break;
   }
@@ -113,6 +126,9 @@ void scanner::string() {
 
   if (done()) {
     // TODO: err here
+    lox::error(line_,
+               fmt::format("Unterminated string: {}", substr(start_, curr_)));
+    return;
   }
 
   // The closing "
@@ -123,16 +139,14 @@ void scanner::string() {
 }
 
 void scanner::number() {
-  while (is_digit(peek()))
-    next();
+  while (is_digit(peek())) next();
 
   // Look for a fractional part
   if (peek() == '.' && is_digit(peek_next())) {
     // Consume the "."
     next();
 
-    while (is_digit(peek()))
-      next();
+    while (is_digit(peek())) next();
   }
 
   double num = std::stod(substr(start_, curr_));
@@ -140,8 +154,7 @@ void scanner::number() {
 }
 
 void scanner::identifier() {
-  while (is_alphanumeric(peek()))
-    next();
+  while (is_alphanumeric(peek())) next();
 
   token_type type = is_keyword(substr(start_, curr_));
   add_token(type);

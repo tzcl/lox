@@ -20,7 +20,7 @@ project(lox
   LANGUAGES CXX)
 add_compile_options("-v")
 
-set(SOURCES lox/main.cpp lox/token.cpp lox/scanner.cpp)
+set(SOURCES lox/main.cpp lox/token.cpp lox/scanner.cpp lox/error.cpp)
 
 add_executable(lox ${SOURCES})
 

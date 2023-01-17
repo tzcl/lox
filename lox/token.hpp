@@ -32,7 +32,6 @@ enum class token_type {
   NUM_TYPES
 };
 
-// TODO: do I really want a variant here?
 // std::monostate here is a well-behaved empty alternative. Putting it first
 // allows for token_literal to be default-constructed.
 using token_literal = std::variant<std::monostate, std::string, double>;

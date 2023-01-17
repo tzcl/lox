@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <exception>
 #include <fmt/core.h>
 #include <fstream>
 #include <iostream>
@@ -7,6 +8,7 @@
 #include <string_view>
 #include <sysexits.h>
 
+#include <lox/error.hpp>
 #include <lox/scanner.hpp>
 #include <lox/token.hpp>
 
@@ -32,6 +34,9 @@ void run_file(std::string const& path) {
   file >> ss.rdbuf();
 
   run(ss.str());
+
+  // TODO: This is not the best, return error codes?
+  if (lox::errored) exit(EX_DATAERR);
 }
 
 void run_prompt() {
@@ -42,6 +47,7 @@ void run_prompt() {
     std::getline(std::cin, line);
     if (line.empty()) break;
     run(line);
+    lox::errored = false;
   }
 }
 

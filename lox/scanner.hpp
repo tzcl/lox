@@ -37,8 +37,7 @@ private:
 
   inline void add_token(token_type type,
                         token_literal const& literal = token_literal()) {
-    tokens_.emplace_back(type, substr(start_, curr_), line_,
-                         literal);
+    tokens_.emplace_back(type, substr(start_, curr_), line_, literal);
   }
 
   inline auto substr(int start, int end) -> std::string {
@@ -52,6 +51,8 @@ private:
   static inline auto is_alphanumeric(char c) -> bool {
     return is_alpha(c) || is_digit(c);
   }
+  
+  void find_closing_tag();
 
   std::string const source_;
   std::vector<token> tokens_;
