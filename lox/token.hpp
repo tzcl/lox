@@ -4,6 +4,8 @@
 #include <string>
 #include <variant>
 
+#include <fmt/format.h>
+
 #undef EOF
 
 namespace lox {
@@ -36,11 +38,13 @@ enum class token_type {
 // allows for token_literal to be default-constructed.
 using token_literal = std::variant<std::monostate, std::string, double>;
 
+auto to_string(token_literal literal) -> std::string;
+
 struct token {
-  token_type const type_;
-  std::string const lexeme_;
-  int const line_;
-  token_literal const literal_;
+  token_type const type;
+  std::string const lexeme;
+  int const line;
+  token_literal const literal;
 
   token(token_type type, std::string lexeme, int line,
         token_literal literal = token_literal());
@@ -49,3 +53,10 @@ struct token {
 };
 
 } // namespace lox
+
+template <> struct fmt::formatter<lox::token_literal> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(lox::token_literal literal, FormatContext& ctx) const {
+    return formatter<std::string>::format(lox::to_string(literal), ctx);
+  }
+};

@@ -15,17 +15,17 @@
 #include <string_view>
 #include <sysexits.h>
 
-void run(std::string const &source) {
+void run(std::string const& source) {
   lox::scanner scanner(source);
 
-  for (lox::token const &token : scanner.tokens()) {
+  for (lox::token const& token : scanner.tokens()) {
     fmt::print("{}\n", token.str());
   }
 }
 
 // Pass by const reference because we want a non-owning view
 // but need a null-terminated string.
-void run_file(std::string const &path) {
+void run_file(std::string const& path) {
   // Requires a null-terminated string (artifact of underlying C file API)
   std::ifstream file(path);
   if (!file.good()) {
@@ -39,8 +39,7 @@ void run_file(std::string const &path) {
   run(ss.str());
 
   // TODO: This is not the best, return error codes?
-  if (lox::errored)
-    exit(EX_DATAERR);
+  if (lox::errored) exit(EX_DATAERR);
 }
 
 void run_prompt() {
@@ -49,14 +48,13 @@ void run_prompt() {
   while (true) {
     fmt::print("> ");
     std::getline(std::cin, line);
-    if (line.empty())
-      break;
+    if (line.empty()) break;
     run(line);
     lox::errored = false;
   }
 }
 
-auto main(int argc, char *argv[]) -> int {
+auto main(int argc, char* argv[]) -> int {
   fmt::print("hello, world!\n");
   fmt::print("{}, {}\n", argc, argc > 0 ? argv[0] : "");
 
@@ -70,13 +68,9 @@ auto main(int argc, char *argv[]) -> int {
   }
 
   using namespace lox;
-  auto ex = expr(
-    binary_expr{
-      unary_expr{token{token_type::MINUS, "-", 1}, literal_expr{1.3}},
-      token{token_type::STAR, "*", 1}, grouping_expr{literal_expr{45.67}}
-    
-    }
-  );
+  auto ex = expr(binary_expr{
+      unary_expr{token{token_type::MINUS, "-", 1}, literal_expr{1.}},
+      token{token_type::STAR, "*", 1}, grouping_expr{literal_expr{45.67}}});
 
   fmt::print("{}\n", print(ast_printer{}, ex));
 

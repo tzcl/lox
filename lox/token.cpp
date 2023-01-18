@@ -32,14 +32,14 @@ constexpr auto to_string(token_type type) -> const char* {
 auto to_string(token_literal literal) -> std::string {
   using namespace std::string_literals;
   return std::visit(
-      [](const auto& arg) {
+      [](auto const& arg) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, std::monostate>) {
-          return "empty"s;
+          return "null"s;
         } else if constexpr (std::is_same_v<T, std::string>) {
           return arg;
         } else if constexpr (std::is_same_v<T, double>) {
-          return std::to_string(arg);
+          return fmt::format("{}", arg);
         }
       },
       literal);
@@ -47,11 +47,10 @@ auto to_string(token_literal literal) -> std::string {
 
 token::token(token_type type, std::string lexeme, int line,
              token_literal literal)
-    : type_(type), lexeme_(std::move(lexeme)), line_(line),
-      literal_(std::move(literal)) {}
+    : type(type), lexeme(std::move(lexeme)), line(line),
+      literal(std::move(literal)) {}
 
 auto token::str() const -> std::string {
-  return fmt::format("{} {} {}", to_string(type_), lexeme_,
-                     to_string(literal_));
+  return fmt::format("{} {} {}", to_string(type), lexeme, literal);
 }
 } // namespace lox
