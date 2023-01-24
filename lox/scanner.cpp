@@ -1,32 +1,8 @@
 #include "lox/error.hpp"
 #include <fmt/core.h>
 #include <lox/scanner.hpp>
-#include <unordered_map>
 
 namespace lox {
-
-auto is_keyword(std::string_view str) -> token_type {
-  static const std::unordered_map<std::string_view, token_type> keywords{{
-      {"and", token_type::AND},
-      {"class", token_type::CLASS},
-      {"else", token_type::ELSE},
-      {"false", token_type::FALSE},
-      {"for", token_type::FOR},
-      {"fun", token_type::FUN},
-      {"if", token_type::IF},
-      {"nil", token_type::NIL},
-      {"or", token_type::OR},
-      {"print", token_type::PRINT},
-      {"return", token_type::RETURN},
-      {"super", token_type::SUPER},
-      {"this", token_type::THIS},
-      {"true", token_type::TRUE},
-      {"var", token_type::VAR},
-      {"while", token_type::WHILE},
-  }};
-
-  return keywords.at(str);
-}
 
 auto scanner::tokens() -> std::vector<token> {
   while (!done()) {
@@ -34,7 +10,7 @@ auto scanner::tokens() -> std::vector<token> {
     scan();
   }
 
-  tokens_.emplace_back(token_type::EOF, "", line_);
+  tokens_.push_back(token{token_type::EOF, "", line_});
   return tokens_;
 }
 
@@ -171,7 +147,7 @@ void scanner::number() {
 void scanner::identifier() {
   while (is_alphanumeric(peek())) next();
 
-  token_type type = is_keyword(substr(start_, curr_));
+  token_type type = keywords.at(substr(start_, curr_));
   add_token(type);
 }
 

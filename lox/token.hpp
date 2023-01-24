@@ -2,6 +2,7 @@
 
 #include <array>
 #include <string>
+#include <utility>
 #include <variant>
 
 #include <fmt/format.h>
@@ -45,10 +46,7 @@ struct token {
   std::string const lexeme;
   int const line;
   token_literal const literal;
-
-  token(token_type type, std::string lexeme, int line,
-        token_literal literal = token_literal());
-
+  
   [[nodiscard]] auto str() const -> std::string;
 };
 
@@ -56,7 +54,7 @@ struct token {
 
 template <> struct fmt::formatter<lox::token_literal> : formatter<std::string> {
   template <typename FormatContext>
-  auto format(lox::token_literal literal, FormatContext& ctx) const {
+  auto format(lox::token_literal const& literal, FormatContext& ctx) const {
     return formatter<std::string>::format(lox::to_string(literal), ctx);
   }
 };

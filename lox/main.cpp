@@ -15,7 +15,7 @@
 #include <string_view>
 #include <sysexits.h>
 
-void run(std::string const& source) {
+static void run(std::string const& source) {
   lox::scanner scanner(source);
 
   for (lox::token const& token : scanner.tokens()) {
@@ -25,7 +25,7 @@ void run(std::string const& source) {
 
 // Pass by const reference because we want a non-owning view
 // but need a null-terminated string.
-void run_file(std::string const& path) {
+static void run_file(std::string const& path) {
   // Requires a null-terminated string (artifact of underlying C file API)
   std::ifstream file(path);
   if (!file.good()) {
@@ -42,7 +42,7 @@ void run_file(std::string const& path) {
   if (lox::errored) exit(EX_DATAERR);
 }
 
-void run_prompt() {
+static void run_prompt() {
   fmt::print("Running prompt\n");
   std::string line;
   while (true) {
@@ -69,12 +69,12 @@ auto main(int argc, char* argv[]) -> int {
 
   using namespace lox;
   auto ex1 = expr(binary_expr{
-      unary_expr{token{token_type::MINUS, "-", 1}, literal_expr{1.}},
-      token{token_type::STAR, "*", 1}, grouping_expr{literal_expr{45.67}}});
+      unary_expr{token{token_type::MINUS, "-", 1, {}}, literal_expr{1.}},
+      token{token_type::STAR, "*", 1, {}}, grouping_expr{literal_expr{45.67}}});
   auto ex2 = expr(binary_expr{
-    binary_expr{literal_expr{1.}, token{token_type::PLUS, "+", 1}, literal_expr{2.}},
-    token{token_type::STAR, "*", 1},
-    binary_expr{literal_expr{4.}, token{token_type::MINUS, "-", 1}, literal_expr{3.}}
+    binary_expr{literal_expr{1.}, token{token_type::PLUS, "+", 1, {}}, literal_expr{2.}},
+    token{token_type::STAR, "*", 1, {}},
+    binary_expr{literal_expr{4.}, token{token_type::MINUS, "-", 1, {}}, literal_expr{3.}}
   });
 
   fmt::print("{}\n", print(sexp_printer{}, ex1));

@@ -45,11 +45,6 @@ auto to_string(token_literal literal) -> std::string {
       literal);
 }
 
-token::token(token_type type, std::string lexeme, int line,
-             token_literal literal)
-    : type(type), lexeme(std::move(lexeme)), line(line),
-      literal(std::move(literal)) {}
-
 auto token::str() const -> std::string {
   return fmt::format("{} {} {}", to_string(type), lexeme, literal);
 }
