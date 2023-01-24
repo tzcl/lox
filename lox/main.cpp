@@ -68,11 +68,17 @@ auto main(int argc, char* argv[]) -> int {
   }
 
   using namespace lox;
-  auto ex = expr(binary_expr{
+  auto ex1 = expr(binary_expr{
       unary_expr{token{token_type::MINUS, "-", 1}, literal_expr{1.}},
       token{token_type::STAR, "*", 1}, grouping_expr{literal_expr{45.67}}});
+  auto ex2 = expr(binary_expr{
+    binary_expr{literal_expr{1.}, token{token_type::PLUS, "+", 1}, literal_expr{2.}},
+    token{token_type::STAR, "*", 1},
+    binary_expr{literal_expr{4.}, token{token_type::MINUS, "-", 1}, literal_expr{3.}}
+  });
 
-  fmt::print("{}\n", print(ast_printer{}, ex));
+  fmt::print("{}\n", print(sexp_printer{}, ex1));
+  fmt::print("{}\n", print(rpn_printer{}, ex2));
 
   return EX_OK;
 }
