@@ -37,7 +37,7 @@ enum class token_type {
 
 // std::monostate here is a well-behaved empty alternative. Putting it first
 // allows for token_literal to be default-constructed.
-using token_literal = std::variant<std::monostate, std::string, double>;
+using token_literal = std::variant<std::monostate, bool, double, std::string>;
 
 auto to_string(token_literal literal) -> std::string;
 

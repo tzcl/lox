@@ -7,3 +7,5 @@ An implementation of [Crafting Interpreters](https://craftinginterpreters.com/)'
 - [ ] Read through the CGold documentation on CMake and restructure project. 
   - [ ] Divide into tree-walking interpreter and bytecode VM.
 - [ ] Write about the visitor pattern.
+- [ ] Clean up code
+  - [ ] Refactor `scanner.hpp`

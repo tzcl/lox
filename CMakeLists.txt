@@ -18,10 +18,11 @@ endif()
 project(lox
   DESCRIPTION "An implementation of the Lox language in C++"
   LANGUAGES CXX)
-add_compile_options("-Weverything" 
-  "-Wno-c++98-compat" "-Wno-padded" "-Wno-sign-conversion" "-Wno-missing-field-initializers")
+add_compile_options("-Weverything"  "-Wno-c++98-compat" "-Wno-padded" 
+  "-Wno-sign-conversion" "-Wno-missing-field-initializers")
 
-set(SOURCES lox/main.cpp lox/token.cpp lox/scanner.cpp lox/error.cpp)
+set(SOURCES lox/main.cpp lox/token.cpp lox/scanner.cpp lox/error.cpp 
+  lox/parser.cpp)
 
 add_executable(lox ${SOURCES})
 

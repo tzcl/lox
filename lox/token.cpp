@@ -38,7 +38,7 @@ auto to_string(token_literal literal) -> std::string {
           return "null"s;
         } else if constexpr (std::is_same_v<T, std::string>) {
           return arg;
-        } else if constexpr (std::is_same_v<T, double>) {
+        } else {
           return fmt::format("{}", arg);
         }
       },
