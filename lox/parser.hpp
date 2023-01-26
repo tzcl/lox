@@ -24,8 +24,8 @@ private:
   auto unary() -> expr;
   auto primary() -> expr;
 
-  template<typename rule_fn>
-  auto left_assoc(rule_fn rule, std::initializer_list<token_type> types) -> expr;
+  template<typename R>
+  auto left_assoc(R rule, std::initializer_list<token_type> types) -> expr;
 
   auto match(std::initializer_list<token_type> types) -> bool;
   auto consume(token_type type, std::string_view message) -> token;

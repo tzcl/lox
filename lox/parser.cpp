@@ -45,51 +45,21 @@ auto parser::expression() -> expr {
 }
 
 auto parser::equality() -> expr {
-  expr ex = comparison();
-
-  while (match({BANG_EQUAL, EQUAL_EQUAL})) {
-    token op = prev();
-    expr right = comparison();
-    ex = binary_expr{ex, op, right};
-  }
-
-  return ex;
+  return left_assoc(std::bind_front(&parser::comparison, this),
+                    {BANG_EQUAL, EQUAL_EQUAL});
 }
 
 auto parser::comparison() -> expr {
-  expr ex = term();
-
-  while (match({GREATER, GREATER_EQUAL, LESS, LESS_EQUAL})) {
-    token op = prev();
-    expr right = term();
-    ex = binary_expr{ex, op, right};
-  }
-
-  return ex;
+  return left_assoc(std::bind_front(&parser::term, this),
+                    {GREATER, GREATER_EQUAL, LESS, LESS_EQUAL});
 }
 
 auto parser::term() -> expr {
-  expr ex = factor();
-
-  while (match({MINUS, PLUS})) {
-    token op = prev();
-    expr right = factor();
-    ex = binary_expr{ex, op, right};
-  }
-
-  return ex;
+  return left_assoc(std::bind_front(&parser::factor, this), {MINUS, PLUS});
 }
 
 auto parser::factor() -> expr {
-  expr ex = unary();
-
-  while (match({SLASH, STAR})) {
-    token op = prev();
-    expr right = unary();
-    ex = binary_expr{ex, op, right};
-  }
-
-  return ex;
+  return left_assoc(std::bind_front(&parser::unary, this), {SLASH, STAR});
 }
 
 auto parser::unary() -> expr {
@@ -99,18 +69,15 @@ auto parser::unary() -> expr {
     return unary_expr{op, right};
   }
 
-
   return primary();
 }
 
 auto parser::primary() -> expr {
-  if (match({token_type::FALSE})) return literal_expr{false};
-  if (match({token_type::TRUE})) return literal_expr{true};
+  if (match({FALSE})) return literal_expr{false};
+  if (match({TRUE})) return literal_expr{true};
   if (match({NIL})) return literal_expr{};
 
-  if (match({NUMBER, STRING})) {
-    return literal_expr{prev().literal};
-  }
+  if (match({NUMBER, STRING})) { return literal_expr{prev().literal}; }
 
   if (match({LEFT_PAREN})) {
     expr ex = expression();
@@ -121,9 +88,8 @@ auto parser::primary() -> expr {
   throw raise_error(peek(), "expected expression");
 }
 
-// https://www.youtube.com/watch?v=Rbl3h0RJuuY
-template<typename rule_fn>
-auto parser::left_assoc(rule_fn rule, std::initializer_list<token_type> types)
+template <typename R>
+auto parser::left_assoc(R rule, std::initializer_list<token_type> types)
     -> expr {
   expr ex = rule();
 
@@ -143,7 +109,7 @@ auto parser::match(std::initializer_list<token_type> types) -> bool {
       return true;
     }
   }
-  
+
   return false;
 }
 
