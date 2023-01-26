@@ -20,7 +20,7 @@ void scanner::skip_block_comment() {
   // Idea: keep track of the levels of nesting
   for (int depth = 1; depth > 0;) {
     if (done()) {
-      lox::error(line_, "Unterminated block comment");
+      error::report(line_, "Unterminated block comment");
       return;
     }
 
@@ -97,13 +97,12 @@ void scanner::scan() {
     break;
 
   default:
-    // TODO: report error here
     if (is_digit(c)) {
       number();
     } else if (is_alpha(c)) {
       identifier();
     } else {
-      lox::error(line_, fmt::format("Unexpected character: {}", c));
+      error::report(line_, fmt::format("Unexpected character: {}", c));
     }
     break;
   }
@@ -116,9 +115,8 @@ void scanner::string() {
   }
 
   if (done()) {
-    // TODO: err here
-    lox::error(line_,
-               fmt::format("Unterminated string: {}", substr(start_, curr_)));
+    error::report(
+        line_, fmt::format("Unterminated string: {}", substr(start_, curr_)));
     return;
   }
 

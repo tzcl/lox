@@ -3,6 +3,7 @@
 #include <lox/expr.hpp>
 #include <lox/token.hpp>
 
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -12,6 +13,8 @@ class parser {
 public:
   explicit parser(std::vector<token> tokens) : tokens_(std::move(tokens)) {}
 
+  auto parse() -> expr;
+  
 private:
   auto expression() -> expr;
   auto equality() -> expr;
@@ -21,8 +24,11 @@ private:
   auto unary() -> expr;
   auto primary() -> expr;
 
+  // TODO: implement this
   auto left_assoc(auto&& rule, std::initializer_list<token_type> types) -> expr;
   auto match(std::initializer_list<token_type> types) -> bool;
+  auto consume(token_type type, std::string_view message) -> token;
+  void synchronise();
 
   inline auto peek() -> token { return tokens_[curr_]; }
   inline auto prev() -> token { return tokens_[curr_ - 1]; }

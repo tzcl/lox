@@ -27,7 +27,7 @@ struct sexp_printer {
     return fmt::format("({} {} {})", e->op.lexeme, std::visit(*this, e->left),
                        std::visit(*this, e->right));
   }
-  auto operator()(box<grouping_expr> const& e) -> std::string {
+  auto operator()(box<group_expr> const& e) -> std::string {
     return fmt::format("(group {})", std::visit(*this, e->ex));
   }
   auto operator()(box<unary_expr> const& e) -> std::string {
@@ -43,7 +43,7 @@ struct rpn_printer {
     return fmt::format("{} {} {}", std::visit(*this, e->left),
                        std::visit(*this, e->right), e->op.lexeme);
   }
-  auto operator()(box<grouping_expr> const& e) -> std::string {
+  auto operator()(box<group_expr> const& e) -> std::string {
     return fmt::format("{}", std::visit(*this, e->ex));
   }
   auto operator()(box<unary_expr> const& e) -> std::string {

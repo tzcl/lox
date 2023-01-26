@@ -1,11 +1,14 @@
 #pragma once
 
+#include <lox/token.hpp>
+
 #include <string_view>
 
-namespace lox {
+namespace lox::error {
 
 static bool errored;
 
-void error(int line, std::string_view message);
+void report(int line, std::string_view message);
+void parser_err(token token, std::string_view message);
 
-} // namespace lox
+} // namespace lox::error

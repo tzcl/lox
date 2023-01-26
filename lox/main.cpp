@@ -1,6 +1,7 @@
 #include <lox/ast_printer.hpp>
 #include <lox/error.hpp>
 #include <lox/expr.hpp>
+#include <lox/parser.hpp>
 #include <lox/scanner.hpp>
 #include <lox/token.hpp>
 
@@ -17,10 +18,13 @@
 
 static void run(std::string const& source) {
   lox::scanner scanner(source);
+  lox::parser parser(scanner.tokens());
+  lox::expr ex = parser.parse();
 
-  for (lox::token const& token : scanner.tokens()) {
-    fmt::print("{}\n", token.str());
-  }
+  // Stop if there was a syntax error
+  if (lox::error::errored) return;
+
+  fmt::print("{}\n", lox::print(lox::sexp_printer{}, ex));
 }
 
 // Pass by const reference because we want a non-owning view
@@ -39,7 +43,7 @@ static void run_file(std::string const& path) {
   run(ss.str());
 
   // TODO: This is not the best, return error codes?
-  if (lox::errored) exit(EX_DATAERR);
+  if (lox::error::errored) exit(EX_DATAERR);
 }
 
 static void run_prompt() {
@@ -50,7 +54,7 @@ static void run_prompt() {
     std::getline(std::cin, line);
     if (line.empty()) break;
     run(line);
-    lox::errored = false;
+    lox::error::errored = false;
   }
 }
 
@@ -70,12 +74,13 @@ auto main(int argc, char* argv[]) -> int {
   using namespace lox;
   auto ex1 = expr(binary_expr{
       unary_expr{token{token_type::MINUS, "-", 1, {}}, literal_expr{1.}},
-      token{token_type::STAR, "*", 1, {}}, grouping_expr{literal_expr{45.67}}});
+      token{token_type::STAR, "*", 1, {}}, group_expr{literal_expr{45.67}}});
   auto ex2 = expr(binary_expr{
-    binary_expr{literal_expr{1.}, token{token_type::PLUS, "+", 1, {}}, literal_expr{2.}},
-    token{token_type::STAR, "*", 1, {}},
-    binary_expr{literal_expr{4.}, token{token_type::MINUS, "-", 1, {}}, literal_expr{3.}}
-  });
+      binary_expr{literal_expr{1.}, token{token_type::PLUS, "+", 1, {}},
+                  literal_expr{2.}},
+      token{token_type::STAR, "*", 1, {}},
+      binary_expr{literal_expr{4.}, token{token_type::MINUS, "-", 1, {}},
+                  literal_expr{3.}}});
 
   fmt::print("{}\n", print(sexp_printer{}, ex1));
   fmt::print("{}\n", print(rpn_printer{}, ex2));

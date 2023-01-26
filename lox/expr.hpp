@@ -12,7 +12,7 @@ struct literal_expr {
 };
 
 using expr = std::variant<literal_expr, box<struct binary_expr>,
-                          box<struct grouping_expr>, box<struct unary_expr>>;
+                          box<struct group_expr>, box<struct unary_expr>>;
 
 struct binary_expr {
   expr const left;
@@ -20,7 +20,7 @@ struct binary_expr {
   expr const right;
 };
 
-struct grouping_expr {
+struct group_expr {
   expr const ex;
 };
 
@@ -28,4 +28,5 @@ struct unary_expr {
   token const op;
   expr const right;
 };
+
 } // namespace lox

@@ -1,11 +1,20 @@
-#include <fmt/core.h>
 #include <lox/error.hpp>
 
-namespace lox {
+#include <fmt/core.h>
 
-void error(int line, std::string_view message) {
+namespace lox::error {
+
+void report(int line, std::string_view message) {
   fmt::print("[line {}] Error: {}\n", line, message);
   errored = true;
+}
+
+void parser_err(token token, std::string_view message) {
+  if (token.type == token_type::EOF) {
+    report(token.line, fmt::format("{} at end", message));
+  } else {
+    report(token.line, fmt::format("{} at '{}'", message, token.lexeme));
+  }
 }
 
 } // namespace lox
