@@ -42,10 +42,10 @@ using token_literal = std::variant<std::monostate, bool, double, std::string>;
 auto to_string(token_literal literal) -> std::string;
 
 struct token {
-  token_type const type;
-  std::string const lexeme;
-  int const line;
-  token_literal const literal;
+  token_type type;
+  std::string lexeme;
+  int line;
+  token_literal literal;
   
   [[nodiscard]] auto str() const -> std::string;
 };
@@ -56,5 +56,12 @@ template <> struct fmt::formatter<lox::token_literal> : formatter<std::string> {
   template <typename FormatContext>
   auto format(lox::token_literal const& literal, FormatContext& ctx) const {
     return formatter<std::string>::format(lox::to_string(literal), ctx);
+  }
+};
+  
+template <> struct fmt::formatter<lox::token> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(lox::token const& token, FormatContext& ctx) const {
+    return formatter<std::string>::format(token.str(), ctx);
   }
 };

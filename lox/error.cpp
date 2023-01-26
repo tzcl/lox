@@ -5,15 +5,15 @@
 namespace lox::error {
 
 void report(int line, std::string_view message) {
-  fmt::print("[line {}] Error: {}\n", line, message);
+  fmt::print("[line {}] Error {}\n", line, message);
   errored = true;
 }
 
 void parser_err(token token, std::string_view message) {
   if (token.type == token_type::EOF) {
-    report(token.line, fmt::format("{} at end", message));
+    report(token.line, fmt::format("at end: {}", message));
   } else {
-    report(token.line, fmt::format("{} at '{}'", message, token.lexeme));
+    report(token.line, fmt::format("at '{}': {}", token.lexeme, message));
   }
 }
 

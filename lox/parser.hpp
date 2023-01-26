@@ -14,7 +14,7 @@ public:
   explicit parser(std::vector<token> tokens) : tokens_(std::move(tokens)) {}
 
   auto parse() -> expr;
-  
+
 private:
   auto expression() -> expr;
   auto equality() -> expr;
@@ -24,8 +24,9 @@ private:
   auto unary() -> expr;
   auto primary() -> expr;
 
-  // TODO: implement this
-  auto left_assoc(auto&& rule, std::initializer_list<token_type> types) -> expr;
+  template<typename rule_fn>
+  auto left_assoc(rule_fn rule, std::initializer_list<token_type> types) -> expr;
+
   auto match(std::initializer_list<token_type> types) -> bool;
   auto consume(token_type type, std::string_view message) -> token;
   void synchronise();
@@ -42,7 +43,7 @@ private:
     return peek().type == type;
   }
 
-  std::vector<token> tokens_;
+  const std::vector<token> tokens_;
   int curr_ = 0;
 };
 

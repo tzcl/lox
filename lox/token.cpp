@@ -1,5 +1,7 @@
-#include <fmt/std.h>
 #include <lox/token.hpp>
+
+#include <fmt/std.h>
+
 #include <utility>
 
 namespace lox {
@@ -29,23 +31,25 @@ constexpr auto to_string(token_type type) -> const char* {
   return token_type_names.at(static_cast<std::size_t>(type));
 }
 
+// clang-format off
+template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; }; 
+template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+// clang-format on
+
 auto to_string(token_literal literal) -> std::string {
   using namespace std::string_literals;
   return std::visit(
-      [](auto const& arg) {
-        using T = std::decay_t<decltype(arg)>;
-        if constexpr (std::is_same_v<T, std::monostate>) {
-          return "null"s;
-        } else if constexpr (std::is_same_v<T, std::string>) {
-          return arg;
-        } else {
-          return fmt::format("{}", arg);
-        }
-      },
+      overloaded{[](std::monostate) { return "null"s; },
+                 [](bool arg) { return arg ? "true"s : "false"s; },
+                 [](double arg) { return fmt::format("{}", arg); },
+                 [](std::string arg) { return fmt::format("\"{}\"", arg); }},
       literal);
 }
 
 auto token::str() const -> std::string {
-  return fmt::format("{} {} {}", to_string(type), lexeme, literal);
+  return literal.index() == 0U
+             ? fmt::format("{}", to_string(type))
+             : fmt::format("{} {} {}", to_string(type), lexeme, literal);
 }
+
 } // namespace lox

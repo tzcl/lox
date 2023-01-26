@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <utility>
 
 namespace lox {
 
@@ -11,7 +12,9 @@ namespace lox {
 // -Wweak-table isn't worth worrying too much about, only one vtable is left
 // after the static link step and there isn't much compile time overhead.
 // See Facebook's discussion: https://github.com/facebook/folly/issues/834
-// However, LLVM recommend using an anchor to resolve this issue: https://llvm.org/docs/CodingStandards.html#provide-a-virtual-method-anchor-for-classes-in-headersclass parse_error : public std::exception {
+// However, LLVM recommend using an anchor to resolve this issue:
+// https://llvm.org/docs/CodingStandards.html#provide-a-virtual-method-anchor-for-classes-in-headersclass
+// parse_error : public std::exception {
 class parse_error final : public std::exception {
 public:
   [[nodiscard]] auto what() const noexcept -> const char* override {
@@ -23,7 +26,7 @@ public:
 void parse_error::anchor() {}
 
 static auto raise_error(token token, std::string_view message) -> parse_error {
-  error::parser_err(token, message);
+  error::parser_err(std::move(token), message);
   return {};
 }
 
@@ -33,9 +36,7 @@ using enum lox::token_type;
 auto parser::parse() -> expr {
   try {
     return expression();
-  } catch (parse_error const& err) {
-    return {};
-  }
+  } catch (parse_error const&) { return {}; }
 }
 
 auto parser::expression() -> expr {
@@ -82,7 +83,7 @@ auto parser::term() -> expr {
 auto parser::factor() -> expr {
   expr ex = unary();
 
-  while (match({MINUS, PLUS})) {
+  while (match({SLASH, STAR})) {
     token op = prev();
     expr right = unary();
     ex = binary_expr{ex, op, right};
@@ -92,34 +93,37 @@ auto parser::factor() -> expr {
 }
 
 auto parser::unary() -> expr {
-  if (match({MINUS, PLUS})) {
+  if (match({BANG, MINUS})) {
     token op = prev();
     expr right = unary();
     return unary_expr{op, right};
   }
 
+
   return primary();
 }
 
 auto parser::primary() -> expr {
-  if (match({FALSE})) return literal_expr{false};
-  if (match({TRUE})) return literal_expr{true};
+  if (match({token_type::FALSE})) return literal_expr{false};
+  if (match({token_type::TRUE})) return literal_expr{true};
   if (match({NIL})) return literal_expr{};
 
-  if (match({NUMBER, STRING})) return literal_expr{prev().literal};
+  if (match({NUMBER, STRING})) {
+    return literal_expr{prev().literal};
+  }
 
   if (match({LEFT_PAREN})) {
     expr ex = expression();
-    consume(RIGHT_PAREN, "Expect ')' after expression.");
+    consume(RIGHT_PAREN, "expected ')' after expression");
     return group_expr{ex};
   }
-  
-  throw raise_error(peek(), "Expect expression.");
+
+  throw raise_error(peek(), "expected expression");
 }
 
-// TODO: Try implementing this. Seems like I might have to use templates?
 // https://www.youtube.com/watch?v=Rbl3h0RJuuY
-auto parser::left_assoc(auto&& rule, std::initializer_list<token_type> types)
+template<typename rule_fn>
+auto parser::left_assoc(rule_fn rule, std::initializer_list<token_type> types)
     -> expr {
   expr ex = rule();
 
@@ -133,10 +137,14 @@ auto parser::left_assoc(auto&& rule, std::initializer_list<token_type> types)
 }
 
 auto parser::match(std::initializer_list<token_type> types) -> bool {
-  // I didn't know about all_of/any_of/none_of, but they're more explicit
-  // than writing a for loop (although I'm not sure what's more readable).
-  return std::ranges::any_of(types,
-                             [this](token_type type) { return check(type); });
+  for (token_type const& type : types) {
+    if (check(type)) {
+      next();
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 auto parser::consume(token_type type, std::string_view message) -> token {
