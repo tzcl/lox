@@ -8,7 +8,7 @@ namespace lox {
 
 constexpr std::array token_type_names{
     "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACE", "RIGHT_BRACE", "COMMA", "DOT",
-    "MINUS", "PLUS", "SEMICOLON", "SLASH", "STAR",
+    "MINUS", "PLUS", "SEMICOLON", "SLASH", "STAR", "HOOK", "COLON",
 
     // One or two character tokens
     "BANG", "BANG_EQUAL", "EQUAL", "EQUAL_EQUAL", "GREATER", "GREATER_EQUAL",
@@ -48,8 +48,8 @@ auto to_string(token_literal literal) -> std::string {
 
 auto token::str() const -> std::string {
   return literal.index() == 0U
-             ? fmt::format("{}", to_string(type))
-             : fmt::format("{} {} {}", to_string(type), lexeme, literal);
+           ? fmt::format("{}", to_string(type))
+           : fmt::format("{} {} {}", to_string(type), lexeme, literal);
 }
 
 } // namespace lox

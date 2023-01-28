@@ -45,18 +45,32 @@ auto parser::expression() -> expr {
   return comma();
 }
 
-auto parser::comma() -> expr {
-  return left_assoc(&parser::equality, {COMMA});
+auto parser::comma() -> expr { return left_assoc(&parser::ternary, {COMMA}); }
+
+auto parser::ternary() -> expr {
+  expr ex = equality();
+
+  while (match({HOOK})) {
+    token hook   = prev();
+    expr  conseq = equality();
+
+    consume(COLON, "expected alternate condition of ternary");
+
+    token colon = prev();
+    expr  alt   = ternary();
+
+    ex = ternary_expr{ex, hook, conseq, colon, alt};
+  }
+
+  return ex;
 }
 
 auto parser::equality() -> expr {
-  return left_assoc(&parser::comparison,
-                    {BANG_EQUAL, EQUAL_EQUAL});
+  return left_assoc(&parser::comparison, {BANG_EQUAL, EQUAL_EQUAL});
 }
 
 auto parser::comparison() -> expr {
-  return left_assoc(&parser::term,
-                    {GREATER, GREATER_EQUAL, LESS, LESS_EQUAL});
+  return left_assoc(&parser::term, {GREATER, GREATER_EQUAL, LESS, LESS_EQUAL});
 }
 
 auto parser::term() -> expr {
@@ -69,8 +83,8 @@ auto parser::factor() -> expr {
 
 auto parser::unary() -> expr {
   if (match({BANG, MINUS})) {
-    token op = prev();
-    expr right = unary();
+    token op    = prev();
+    expr  right = unary();
     return unary_expr{op, right};
   }
 
@@ -90,7 +104,42 @@ auto parser::primary() -> expr {
     return group_expr{ex};
   }
 
+  // Check for binary operators missing their first expression
+  missing_binary_op();
+
   throw error(peek(), "expected expression");
+}
+
+void parser::missing_binary_op() {
+  if (match({COMMA})) {
+    token op    = prev();
+    expr  right = ternary();
+    throw error(op, "binary operator missing first operand");
+  }
+
+  if (match({BANG_EQUAL, EQUAL_EQUAL})) {
+    token op    = prev();
+    expr  right = comparison();
+    throw error(op, "binary operator missing first operand");
+  }
+
+  if (match({GREATER, GREATER_EQUAL, LESS, LESS_EQUAL})) {
+    token op    = prev();
+    expr  right = term();
+    throw error(op, "binary operator missing first operand");
+  }
+
+  if (match({MINUS, PLUS})) {
+    token op    = prev();
+    expr  right = factor();
+    throw error(op, "binary operator missing first operand");
+  }
+
+  if (match({SLASH, STAR})) {
+    token op    = prev();
+    expr  right = unary();
+    throw error(op, "binary operator missing first operand");
+  }
 }
 
 template <typename R>
@@ -99,9 +148,9 @@ auto parser::left_assoc(R rule, std::initializer_list<token_type> types)
   expr ex = (this->*rule)();
 
   while (match(types)) {
-    token op = prev();
-    expr right = (this->*rule)();
-    ex = binary_expr{ex, op, right};
+    token op    = prev();
+    expr  right = (this->*rule)();
+    ex          = binary_expr{ex, op, right};
   }
 
   return ex;
@@ -141,6 +190,8 @@ void parser::synchronise() {
     case PRINT:
     case RETURN:
       return;
+    default:
+      break;
     }
 
     next();

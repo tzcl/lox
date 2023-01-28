@@ -19,15 +19,18 @@ private:
   // clang-format off
   auto expression() -> expr;
   auto comma()      -> expr;
+  auto ternary()    -> expr;
   auto equality()   -> expr;
   auto comparison() -> expr;
   auto term()       -> expr;
   auto factor()     -> expr;
   auto unary()      -> expr;
   auto primary()    -> expr;
+  
+  void missing_binary_op();
   // clang-format on
 
-  template<typename R>
+  template <typename R>
   auto left_assoc(R rule, std::initializer_list<token_type> types) -> expr;
 
   auto match(std::initializer_list<token_type> types) -> bool;
@@ -47,6 +50,7 @@ private:
   }
 
   const std::vector<token> tokens_;
+
   int curr_ = 0;
 };
 

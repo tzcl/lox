@@ -18,14 +18,9 @@ struct literal_expr {
   token_literal value;
 };
 
-using expr = std::variant<literal_expr, box<struct binary_expr>,
-                          box<struct group_expr>, box<struct unary_expr>>;
-
-struct binary_expr {
-  expr left;
-  token op;
-  expr right;
-};
+using expr =
+    std::variant<literal_expr, box<struct group_expr>, box<struct unary_expr>,
+                 box<struct binary_expr>, box<struct ternary_expr>>;
 
 struct group_expr {
   expr ex;
@@ -33,7 +28,22 @@ struct group_expr {
 
 struct unary_expr {
   token op;
-  expr right;
+  expr  right;
+};
+
+struct binary_expr {
+  expr  left;
+  token op;
+  expr  right;
+};
+
+// TODO: Can this be anything other than a conditional?
+struct ternary_expr {
+  expr  cond;
+  token hook;
+  expr  conseq;
+  token colon;
+  expr  alt;
 };
 
 } // namespace lox

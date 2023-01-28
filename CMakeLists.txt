@@ -19,7 +19,7 @@ project(lox
   DESCRIPTION "An implementation of the Lox language in C++"
   LANGUAGES CXX)
 add_compile_options("-Weverything"  "-Wno-c++98-compat" "-Wno-padded" 
-  "-Wno-sign-conversion" "-Wno-missing-field-initializers")
+  "-Wno-sign-conversion" "-Wno-missing-field-initializers" "-Wno-switch-enum")
 
 set(SOURCES lox/main.cpp lox/token.cpp lox/scanner.cpp lox/errors.cpp 
   lox/parser.cpp)
@@ -30,3 +30,8 @@ target_include_directories(lox PUBLIC ${lox_SOURCE_DIR})
 
 find_package(fmt)
 target_link_libraries(lox fmt::fmt)
+
+add_custom_target(run
+  COMMAND rlwrap ./lox
+  DEPENDS lox
+  WORKING_DIRECTORY ${CMAKE_PROJECT_DIR})

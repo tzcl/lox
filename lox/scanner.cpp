@@ -55,6 +55,8 @@ void scanner::scan() {
   case '+': add_token(PLUS); break;
   case ';': add_token(SEMICOLON); break;
   case '*': add_token(STAR); break;
+  case '?': add_token(HOOK); break;
+  case ':': add_token(COLON); break;
 
   case '"': string(); break;
     // clang-format on
