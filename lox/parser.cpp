@@ -7,6 +7,8 @@
 
 namespace lox {
 
+using enum lox::token_type;
+
 // Sentinel exception for unwinding the parser.
 //
 // -Wweak-table isn't worth worrying too much about, only one vtable is left
@@ -30,10 +32,9 @@ static auto error(token token, std::string_view message) -> parse_error {
   return {};
 }
 
-// TODO: pull in all token types
-using enum lox::token_type;
-
+// === Parse grammar ===
 auto parser::parse() -> expr {
+  // TODO: synchronise parser on err
   try {
     return expression();
   } catch (parse_error const&) { return {}; }
@@ -41,7 +42,11 @@ auto parser::parse() -> expr {
 
 auto parser::expression() -> expr {
   // TODO: add assignment etc. here
-  return equality();
+  return comma();
+}
+
+auto parser::comma() -> expr {
+  return left_assoc(&parser::equality, {COMMA});
 }
 
 auto parser::equality() -> expr {

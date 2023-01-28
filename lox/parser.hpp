@@ -16,13 +16,16 @@ public:
   auto parse() -> expr;
 
 private:
+  // clang-format off
   auto expression() -> expr;
-  auto equality() -> expr;
+  auto comma()      -> expr;
+  auto equality()   -> expr;
   auto comparison() -> expr;
-  auto term() -> expr;
-  auto factor() -> expr;
-  auto unary() -> expr;
-  auto primary() -> expr;
+  auto term()       -> expr;
+  auto factor()     -> expr;
+  auto unary()      -> expr;
+  auto primary()    -> expr;
+  // clang-format on
 
   template<typename R>
   auto left_assoc(R rule, std::initializer_list<token_type> types) -> expr;
