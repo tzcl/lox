@@ -4,7 +4,7 @@
 
 #include <string_view>
 
-namespace lox::error {
+namespace lox::errors {
 
 static bool errored;
 

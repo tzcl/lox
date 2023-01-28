@@ -1,4 +1,4 @@
-#include <lox/error.hpp>
+#include <lox/errors.hpp>
 #include <lox/parser.hpp>
 
 #include <algorithm>
@@ -25,8 +25,8 @@ public:
 
 void parse_error::anchor() {}
 
-static auto raise_error(token token, std::string_view message) -> parse_error {
-  error::parser_err(std::move(token), message);
+static auto error(token token, std::string_view message) -> parse_error {
+  errors::parser_err(std::move(token), message);
   return {};
 }
 
@@ -45,21 +45,21 @@ auto parser::expression() -> expr {
 }
 
 auto parser::equality() -> expr {
-  return left_assoc(std::bind_front(&parser::comparison, this),
+  return left_assoc(&parser::comparison,
                     {BANG_EQUAL, EQUAL_EQUAL});
 }
 
 auto parser::comparison() -> expr {
-  return left_assoc(std::bind_front(&parser::term, this),
+  return left_assoc(&parser::term,
                     {GREATER, GREATER_EQUAL, LESS, LESS_EQUAL});
 }
 
 auto parser::term() -> expr {
-  return left_assoc(std::bind_front(&parser::factor, this), {MINUS, PLUS});
+  return left_assoc(&parser::factor, {MINUS, PLUS});
 }
 
 auto parser::factor() -> expr {
-  return left_assoc(std::bind_front(&parser::unary, this), {SLASH, STAR});
+  return left_assoc(&parser::unary, {SLASH, STAR});
 }
 
 auto parser::unary() -> expr {
@@ -85,17 +85,17 @@ auto parser::primary() -> expr {
     return group_expr{ex};
   }
 
-  throw raise_error(peek(), "expected expression");
+  throw error(peek(), "expected expression");
 }
 
 template <typename R>
 auto parser::left_assoc(R rule, std::initializer_list<token_type> types)
     -> expr {
-  expr ex = rule();
+  expr ex = (this->*rule)();
 
   while (match(types)) {
     token op = prev();
-    expr right = rule();
+    expr right = (this->*rule)();
     ex = binary_expr{ex, op, right};
   }
 
@@ -115,7 +115,7 @@ auto parser::match(std::initializer_list<token_type> types) -> bool {
 
 auto parser::consume(token_type type, std::string_view message) -> token {
   if (check(type)) return next();
-  throw raise_error(peek(), message);
+  throw error(peek(), message);
 }
 
 void parser::synchronise() {

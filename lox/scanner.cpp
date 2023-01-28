@@ -1,4 +1,4 @@
-#include "lox/error.hpp"
+#include "lox/errors.hpp"
 #include <fmt/core.h>
 #include <lox/scanner.hpp>
 
@@ -20,7 +20,7 @@ void scanner::skip_block_comment() {
   // Idea: keep track of the levels of nesting
   for (int depth = 1; depth > 0;) {
     if (done()) {
-      error::report(line_, "unterminated block comment");
+      errors::report(line_, "unterminated block comment");
       return;
     }
 
@@ -102,7 +102,7 @@ void scanner::scan() {
     } else if (is_alpha(c)) {
       identifier();
     } else {
-      error::report(line_, fmt::format("unexpected character: {}", c));
+      errors::report(line_, fmt::format("unexpected character: {}", c));
     }
     break;
   }
@@ -115,7 +115,7 @@ void scanner::string() {
   }
 
   if (done()) {
-    error::report(
+    errors::report(
         line_, fmt::format("unterminated string: {}", substr(start_, curr_)));
     return;
   }

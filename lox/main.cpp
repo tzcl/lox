@@ -1,5 +1,5 @@
 #include <lox/ast_printer.hpp>
-#include <lox/error.hpp>
+#include <lox/errors.hpp>
 #include <lox/expr.hpp>
 #include <lox/parser.hpp>
 #include <lox/scanner.hpp>
@@ -24,9 +24,9 @@ static void run(std::string const& source) {
   lox::expr ex = parser.parse();
 
   // Stop if there was a syntax error
-  if (lox::error::errored) return;
+  if (lox::errors::errored) return;
 
-  fmt::print("=== Printing AST ===\n{}\n", lox::print(lox::sexp_printer{}, ex));
+  fmt::print("=== Printing AST ===\n{}\n", lox::print(lox::ast_printer{}, ex));
 }
 
 // Pass by const reference because we want a non-owning view
@@ -45,7 +45,7 @@ static void run_file(std::string const& path) {
   run(ss.str());
 
   // TODO: This is not the best, return error codes?
-  if (lox::error::errored) exit(EX_DATAERR);
+  if (lox::errors::errored) exit(EX_DATAERR);
 }
 
 static void run_prompt() {
@@ -56,7 +56,7 @@ static void run_prompt() {
     std::getline(std::cin, line);
     if (line.empty()) break;
     run(line);
-    lox::error::errored = false;
+    lox::errors::errored = false;
   }
 }
 

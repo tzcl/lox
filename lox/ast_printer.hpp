@@ -35,6 +35,22 @@ struct sexp_printer {
   }
 };
 
+struct ast_printer {
+  auto operator()(literal_expr const& e) -> std::string {
+    return fmt::format("{}", e.value);
+  }
+  auto operator()(box<binary_expr> const& e) -> std::string {
+    return fmt::format("({} {} {})", std::visit(*this, e->left), e->op.lexeme,
+                       std::visit(*this, e->right));
+  }
+  auto operator()(box<group_expr> const& e) -> std::string {
+    return fmt::format("(group {})", std::visit(*this, e->ex));
+  }
+  auto operator()(box<unary_expr> const& e) -> std::string {
+    return fmt::format("({} {})", e->op.lexeme, std::visit(*this, e->right));
+  }
+};
+
 struct rpn_printer {
   auto operator()(literal_expr const& e) -> std::string {
     return fmt::format("{}", e.value);

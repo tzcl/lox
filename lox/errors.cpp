@@ -1,8 +1,8 @@
-#include <lox/error.hpp>
+#include <lox/errors.hpp>
 
 #include <fmt/core.h>
 
-namespace lox::error {
+namespace lox::errors {
 
 void report(int line, std::string_view message) {
   fmt::print("[line {}] Error {}\n", line, message);
