@@ -45,21 +45,25 @@ auto parser::expression() -> expr {
   return comma();
 }
 
-auto parser::comma() -> expr { return left_assoc(&parser::ternary, {COMMA}); }
+// TODO: Have to be careful with function parameters as this will cause
+// f(1, 2) to be parsed as f((1, 2)).
+auto parser::comma() -> expr {
+  return left_assoc(&parser::conditional, {COMMA});
+}
 
-auto parser::ternary() -> expr {
+auto parser::conditional() -> expr {
   expr ex = equality();
 
-  while (match({HOOK})) {
+  while (match({QUESTION})) {
     token hook   = prev();
-    expr  conseq = equality();
+    expr  conseq = expression(); // Allow for assignment in then branch
 
     consume(COLON, "expected alternate condition of ternary");
 
     token colon = prev();
-    expr  alt   = ternary();
+    expr  alt   = conditional();
 
-    ex = ternary_expr{ex, hook, conseq, colon, alt};
+    ex = conditional_expr{ex, conseq, alt};
   }
 
   return ex;
@@ -113,32 +117,32 @@ auto parser::primary() -> expr {
 void parser::missing_binary_op() {
   if (match({COMMA})) {
     token op    = prev();
-    expr  right = ternary();
-    throw error(op, "binary operator missing first operand");
+    conditional();
+    throw error(op, "missing left-hand operand");
   }
 
   if (match({BANG_EQUAL, EQUAL_EQUAL})) {
     token op    = prev();
-    expr  right = comparison();
-    throw error(op, "binary operator missing first operand");
+    equality();
+    throw error(op, "missing left-hand operand");
   }
 
   if (match({GREATER, GREATER_EQUAL, LESS, LESS_EQUAL})) {
     token op    = prev();
-    expr  right = term();
-    throw error(op, "binary operator missing first operand");
+    comparison();
+    throw error(op, "missing left-hand operand");
   }
 
-  if (match({MINUS, PLUS})) {
+  if (match({PLUS})) {
     token op    = prev();
-    expr  right = factor();
-    throw error(op, "binary operator missing first operand");
+    term();
+    throw error(op, "missing left-hand operand");
   }
 
   if (match({SLASH, STAR})) {
     token op    = prev();
-    expr  right = unary();
-    throw error(op, "binary operator missing first operand");
+    factor();
+    throw error(op, "missing left-hand operand");
   }
 }
 

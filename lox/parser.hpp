@@ -17,18 +17,18 @@ public:
 
 private:
   // clang-format off
-  auto expression() -> expr;
-  auto comma()      -> expr;
-  auto ternary()    -> expr;
-  auto equality()   -> expr;
-  auto comparison() -> expr;
-  auto term()       -> expr;
-  auto factor()     -> expr;
-  auto unary()      -> expr;
-  auto primary()    -> expr;
-  
-  void missing_binary_op();
+  auto expression()  -> expr;
+  auto comma()       -> expr;
+  auto conditional() -> expr;
+  auto equality()    -> expr;
+  auto comparison()  -> expr;
+  auto term()        -> expr;
+  auto factor()      -> expr;
+  auto unary()       -> expr;
+  auto primary()     -> expr;
   // clang-format on
+
+  void missing_binary_op();
 
   template <typename R>
   auto left_assoc(R rule, std::initializer_list<token_type> types) -> expr;

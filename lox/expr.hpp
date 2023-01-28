@@ -20,7 +20,7 @@ struct literal_expr {
 
 using expr =
     std::variant<literal_expr, box<struct group_expr>, box<struct unary_expr>,
-                 box<struct binary_expr>, box<struct ternary_expr>>;
+                 box<struct binary_expr>, box<struct conditional_expr>>;
 
 struct group_expr {
   expr ex;
@@ -37,12 +37,9 @@ struct binary_expr {
   expr  right;
 };
 
-// TODO: Can this be anything other than a conditional?
-struct ternary_expr {
+struct conditional_expr {
   expr  cond;
-  token hook;
   expr  conseq;
-  token colon;
   expr  alt;
 };
 

@@ -33,10 +33,9 @@ struct sexp_printer {
     return fmt::format("({} {} {})", e->op.lexeme, std::visit(*this, e->left),
                        std::visit(*this, e->right));
   }
-  auto operator()(box<ternary_expr> const& e) -> std::string {
-    return fmt::format("({} {} ({}) ({}))", e->hook.lexeme,
-                       std::visit(*this, e->cond), std::visit(*this, e->conseq),
-                       std::visit(*this, e->alt));
+  auto operator()(box<conditional_expr> const& e) -> std::string {
+    return fmt::format("(if {} ({}) ({}))", std::visit(*this, e->cond),
+                       std::visit(*this, e->conseq), std::visit(*this, e->alt));
   }
 };
 
@@ -54,10 +53,9 @@ struct ast_printer {
     return fmt::format("({} {} {})", std::visit(*this, e->left), e->op.lexeme,
                        std::visit(*this, e->right));
   }
-  auto operator()(box<ternary_expr> const& e) -> std::string {
-    return fmt::format("({} {} {} {} {})", std::visit(*this, e->cond),
-                       e->hook.lexeme, std::visit(*this, e->conseq),
-                       e->colon.lexeme, std::visit(*this, e->alt));
+  auto operator()(box<conditional_expr> const& e) -> std::string {
+    return fmt::format("(if {} then {} else {})", std::visit(*this, e->cond),
+                       std::visit(*this, e->conseq), std::visit(*this, e->alt));
   }
 };
 
@@ -75,10 +73,9 @@ struct rpn_printer {
     return fmt::format("{} {} {}", std::visit(*this, e->left),
                        std::visit(*this, e->right), e->op.lexeme);
   }
-  auto operator()(box<ternary_expr> const& e) -> std::string {
-    return fmt::format("{} {} {} {} {}", std::visit(*this, e->conseq),
-                       std::visit(*this, e->alt), e->colon.lexeme,
-                       std::visit(*this, e->cond), e->hook.lexeme);
+  auto operator()(box<conditional_expr> const& e) -> std::string {
+    return fmt::format("{} {} {} if", std::visit(*this, e->conseq),
+                       std::visit(*this, e->alt), std::visit(*this, e->cond));
   }
 };
 
