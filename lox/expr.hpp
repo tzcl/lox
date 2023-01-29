@@ -12,10 +12,10 @@ namespace lox {
 // > afterwards.
 // https://stackoverflow.com/questions/58414966/move-construction-and-assignment-of-class-with-constant-member
 //
-// That said, tt seems like this in possible in C++20 using
+// That said, it seems like this in possible in C++20 using
 // std::{construct, destroy}_at.
 struct literal_expr {
-  token_literal value;
+  value value;
 };
 
 using expr =
@@ -38,6 +38,7 @@ struct binary_expr {
 };
 
 struct conditional_expr {
+  // TODO: Should this keep track of tokens? How to implement properly?
   expr  cond;
   expr  conseq;
   expr  alt;

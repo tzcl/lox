@@ -7,37 +7,17 @@
 
 namespace lox {
 
-using enum lox::token_type;
-
-// Sentinel exception for unwinding the parser.
-//
-// -Wweak-table isn't worth worrying too much about, only one vtable is left
-// after the static link step and there isn't much compile time overhead.
-// See Facebook's discussion: https://github.com/facebook/folly/issues/834
-// However, LLVM recommend using an anchor to resolve this issue:
-// https://llvm.org/docs/CodingStandards.html#provide-a-virtual-method-anchor-for-classes-in-headersclass
-// parse_error : public std::exception {
-class parse_error final : public std::exception {
-public:
-  [[nodiscard]] auto what() const noexcept -> const char* override {
-    return "parser sentinel";
-  }
-  virtual void anchor();
-};
-
-void parse_error::anchor() {}
-
-static auto error(token token, std::string_view message) -> parse_error {
-  errors::parser_err(std::move(token), message);
-  return {};
-}
+using enum token_type;
 
 // === Parse grammar ===
 auto parser::parse() -> expr {
   // TODO: synchronise parser on err
   try {
     return expression();
-  } catch (parse_error const&) { return {}; }
+  } catch (errors::parser_error const& err) {
+    errors::report_parser_error(err);
+    return {};
+  }
 }
 
 auto parser::expression() -> expr {
@@ -111,38 +91,38 @@ auto parser::primary() -> expr {
   // Check for binary operators missing their first expression
   missing_binary_op();
 
-  throw error(peek(), "expected expression");
+  throw errors::parser_error(peek(), "expected expression");
 }
 
 void parser::missing_binary_op() {
   if (match({COMMA})) {
-    token op    = prev();
+    token op = prev();
     conditional();
-    throw error(op, "missing left-hand operand");
+    throw errors::parser_error(op, "missing left-hand operand");
   }
 
   if (match({BANG_EQUAL, EQUAL_EQUAL})) {
-    token op    = prev();
+    token op = prev();
     equality();
-    throw error(op, "missing left-hand operand");
+    throw errors::parser_error(op, "missing left-hand operand");
   }
 
   if (match({GREATER, GREATER_EQUAL, LESS, LESS_EQUAL})) {
-    token op    = prev();
+    token op = prev();
     comparison();
-    throw error(op, "missing left-hand operand");
+    throw errors::parser_error(op, "missing left-hand operand");
   }
 
   if (match({PLUS})) {
-    token op    = prev();
+    token op = prev();
     term();
-    throw error(op, "missing left-hand operand");
+    throw errors::parser_error(op, "missing left-hand operand");
   }
 
   if (match({SLASH, STAR})) {
-    token op    = prev();
+    token op = prev();
     factor();
-    throw error(op, "missing left-hand operand");
+    throw errors::parser_error(op, "missing left-hand operand");
   }
 }
 
@@ -173,14 +153,13 @@ auto parser::match(std::initializer_list<token_type> types) -> bool {
 
 auto parser::consume(token_type type, std::string_view message) -> token {
   if (check(type)) return next();
-  throw error(peek(), message);
+  throw errors::parser_error(peek(), std::string(message));
 }
 
 void parser::synchronise() {
   next();
 
   while (!done()) {
-    // TODO: refactor to remove token_type?? I'm not fussed
     if (prev().type == SEMICOLON) return;
 
     // Skip over other statements

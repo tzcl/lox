@@ -9,3 +9,4 @@ An implementation of [Crafting Interpreters](https://craftinginterpreters.com/)'
 - [ ] Write about the visitor pattern.
 - [ ] Clean up code
   - [ ] Refactor `scanner.hpp`
+- [ ] Try using `mpark/patterns` and refactor code (mainly with variants).

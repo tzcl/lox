@@ -38,7 +38,7 @@ private:
   inline auto done() -> bool { return curr_ >= ssize(source_); }
 
   inline void add_token(token_type type,
-                        token_literal const& literal = token_literal()) {
+                        value const& literal = value()) {
     // Clang 15 doesn't support parenthesised aggregate initialisation :(
     // tokens_.emplace_back(type, substr(start_, curr_), line_, literal);
     tokens_.push_back(token{type, substr(start_, curr_), line_, literal});
