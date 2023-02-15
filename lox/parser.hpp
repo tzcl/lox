@@ -13,20 +13,21 @@ class parser {
 public:
   explicit parser(std::vector<token> tokens) : tokens_(std::move(tokens)) {}
 
-  auto parse() -> expr;
+  auto parse() -> std::vector<stmt>;
 
 private:
-  // clang-format off
-  auto expression()  -> expr;
-  auto comma()       -> expr;
+  auto statement() -> stmt;
+  auto print_statement() -> stmt;
+  auto expression_statement() -> stmt;
+  auto expression() -> expr;
+  auto comma() -> expr;
   auto conditional() -> expr;
-  auto equality()    -> expr;
-  auto comparison()  -> expr;
-  auto term()        -> expr;
-  auto factor()      -> expr;
-  auto unary()       -> expr;
-  auto primary()     -> expr;
-  // clang-format on
+  auto equality() -> expr;
+  auto comparison() -> expr;
+  auto term() -> expr;
+  auto factor() -> expr;
+  auto unary() -> expr;
+  auto primary() -> expr;
 
   void missing_binary_op();
 

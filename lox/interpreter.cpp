@@ -1,6 +1,7 @@
 #include <lox/errors.hpp>
 #include <lox/interpreter.hpp>
 
+#include <cmath>
 #include <functional>
 #include <utility>
 
@@ -181,10 +182,18 @@ auto interpreter::operator()(box<conditional_expr> const& e) -> value {
   }
 }
 
-void interpret(expr ex) {
+void interpreter::operator()(box<expression_stmt> const& s) {
+  std::visit(*this, s->ex);
+}
+
+void interpreter::operator()(box<print_stmt> const& s) {
+  auto value = std::visit(*this, s->ex);
+  fmt::print("{}\n", value);
+}
+
+void interpret(std::vector<stmt> const& stmts) {
   try {
-    value val = std::visit(interpreter{}, ex);
-    fmt::print("{}\n", print_value(val));
+    for (auto const& s : stmts) { std::visit(interpreter{}, s); }
   } catch (const errors::runtime_error& err) {
     errors::report_runtime_error(err);
   }

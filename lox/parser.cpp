@@ -10,14 +10,29 @@ namespace lox {
 using enum token_type;
 
 // === Parse grammar ===
-auto parser::parse() -> expr {
-  // TODO: synchronise parser on err
-  try {
-    return expression();
-  } catch (errors::parser_error const& err) {
-    errors::report_parser_error(err);
-    return {};
-  }
+auto parser::parse() -> std::vector<stmt> {
+  std::vector<stmt> stmts;
+  while (!done()) { stmts.push_back(statement()); }
+
+  return stmts;
+}
+
+auto parser::statement() -> stmt {
+  if (match({PRINT})) return print_statement();
+
+  return expression_statement();
+}
+
+auto parser::print_statement() -> stmt {
+  expr value = expression();
+  consume(SEMICOLON, "Expect ';' after value");
+  return print_stmt{value};
+}
+
+auto parser::expression_statement() -> stmt {
+  expr ex = expression();
+  consume(SEMICOLON, "Expect ';' after expression");
+  return expression_stmt{ex};
 }
 
 auto parser::expression() -> expr {

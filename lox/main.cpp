@@ -16,23 +16,25 @@
 #include <string>
 #include <string_view>
 #include <sysexits.h>
+#include <vector>
 
 static auto run(std::string const& source) -> int {
   lox::scanner scanner(source);
   fmt::print("=== Printing tokens ===\n[{}]\n",
              fmt::join(scanner.tokens(), ", "));
 
-  lox::parser parser(scanner.tokens());
-  lox::expr   ex = parser.parse();
+  lox::parser            parser(scanner.tokens());
+  std::vector<lox::stmt> stmts = parser.parse();
 
   // Stop if there was an error
   if (lox::errors::has_error()) return EX_DATAERR;
   if (lox::errors::has_runtime_error()) return EX_SOFTWARE;
 
-  fmt::print("=== Printing AST ===\n{}\n", lox::print(lox::ast_printer{}, ex));
+  fmt::print("=== Printing AST ===\n{}\n",
+             fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
 
-  fmt::print("=== Printing value ===\n");
-  lox::interpret(ex);
+  fmt::print("=== Output ===\n");
+  lox::interpret(stmts);
 
   return EX_OK;
 }
