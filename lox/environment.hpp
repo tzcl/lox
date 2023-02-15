@@ -9,11 +9,14 @@
 namespace lox {
 
 struct environment {
-  // Use raw string instead of a token because we don't care about the source
-  // code.
-  std::unordered_map<std::string, value> values;
+  explicit environment(environment* parent) : parent_(parent) {}
 
-  void set(std::string name, value value);
+  // Use a raw pointer because we want a non-owning pointer that may be null.
+  environment* parent_;
+
+  std::unordered_map<std::string, value> values_;
+
+  void set(std::string name, value value) { values_[name] = std::move(value); };
   void assign(token name, value value);
   auto get(token name) -> value;
 };
