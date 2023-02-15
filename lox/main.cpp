@@ -16,9 +16,11 @@
 #include <string>
 #include <string_view>
 #include <sysexits.h>
+#include <utility>
 #include <vector>
 
-static auto run(std::string const& source) -> int {
+static auto run(lox::interpreter& interpreter, std::string const& source)
+    -> int {
   lox::scanner scanner(source);
   fmt::print("=== Printing tokens ===\n[{}]\n",
              fmt::join(scanner.tokens(), ", "));
@@ -34,7 +36,7 @@ static auto run(std::string const& source) -> int {
              fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
 
   fmt::print("=== Output ===\n");
-  lox::interpret(stmts);
+  lox::interpret(interpreter, stmts);
 
   return EX_OK;
 }
@@ -52,7 +54,9 @@ static auto run_file(std::string const& path) -> int {
   const std::ostringstream ss;
   file >> ss.rdbuf();
 
-  int err = run(ss.str());
+  lox::interpreter interpreter{};
+
+  int err = run(interpreter, ss.str());
   if (err > 0) return err;
 
   if (lox::errors::has_error()) EX_DATAERR;
@@ -62,12 +66,13 @@ static auto run_file(std::string const& path) -> int {
 
 [[noreturn]] static void run_prompt() {
   fmt::print("Running prompt\n");
-  std::string line;
+  std::string      line;
+  lox::interpreter interpreter{};
   while (true) {
     fmt::print("> ");
     std::getline(std::cin, line);
 
-    run(line);
+    run(interpreter, line);
 
     lox::errors::reset();
   }

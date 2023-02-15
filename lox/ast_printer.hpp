@@ -31,8 +31,14 @@ struct sexp_printer {
   auto operator()(literal_expr const& e) -> std::string {
     return fmt::format("{}", e.value);
   }
+  auto operator()(variable_expr const& e) -> std::string {
+    return fmt::format("{}", e.name);
+  }
   auto operator()(box<group_expr> const& e) -> std::string {
     return fmt::format("(group {})", std::visit(*this, e->ex));
+  }
+  auto operator()(box<assign_expr> const& e) -> std::string {
+    return fmt::format("(let {} {})", e->name, std::visit(*this, e->value));
   }
   auto operator()(box<unary_expr> const& e) -> std::string {
     return fmt::format("({} {})", e->op.lexeme, std::visit(*this, e->right));
@@ -51,14 +57,26 @@ struct sexp_printer {
   auto operator()(box<print_stmt> const& s) -> std::string {
     return fmt::format("(print {})", std::visit(*this, s->ex));
   }
+  auto operator()(box<variable_stmt> const& s) -> std::string {
+    using namespace std::string_literals;
+    return fmt::format("({} ({}))", s->name,
+                       s->init ? std::visit(*this, *s->init) : "nil"s);
+  }
 };
 
 struct ast_printer {
   auto operator()(literal_expr const& e) -> std::string {
     return fmt::format("{}", e.value);
   }
+  auto operator()(variable_expr const& e) -> std::string {
+    return fmt::format("{}", e.name.lexeme);
+  }
   auto operator()(box<group_expr> const& e) -> std::string {
     return fmt::format("(group {})", std::visit(*this, e->ex));
+  }
+  auto operator()(box<assign_expr> const& e) -> std::string {
+    return fmt::format("({} := {})", e->name.lexeme,
+                       std::visit(*this, e->value));
   }
   auto operator()(box<unary_expr> const& e) -> std::string {
     return fmt::format("({} {})", e->op.lexeme, std::visit(*this, e->right));
@@ -77,14 +95,25 @@ struct ast_printer {
   auto operator()(box<print_stmt> const& s) -> std::string {
     return fmt::format("print({})", std::visit(*this, s->ex));
   }
+  auto operator()(box<variable_stmt> const& s) -> std::string {
+    using namespace std::string_literals;
+    return fmt::format("{}:{}", s->name.lexeme,
+                       s->init ? std::visit(*this, *s->init) : "nil"s);
+  }
 };
 
 struct rpn_printer {
   auto operator()(literal_expr const& e) -> std::string {
     return fmt::format("{}", e.value);
   }
+  auto operator()(variable_expr const& e) -> std::string {
+    return fmt::format("{}", e.name);
+  }
   auto operator()(box<group_expr> const& e) -> std::string {
     return fmt::format("{}", std::visit(*this, e->ex));
+  }
+  auto operator()(box<assign_expr> const& e) -> std::string {
+    return fmt::format("({} := {})", e->name, std::visit(*this, e->value));
   }
   auto operator()(box<unary_expr> const& e) -> std::string {
     return fmt::format("{} {}", std::visit(*this, e->right), e->op.lexeme);
@@ -102,6 +131,11 @@ struct rpn_printer {
   }
   auto operator()(box<print_stmt> const& s) -> std::string {
     return fmt::format("{} print", std::visit(*this, s->ex));
+  }
+  auto operator()(box<variable_stmt> const& s) -> std::string {
+    using namespace std::string_literals;
+    return fmt::format("{} {}", s->init ? std::visit(*this, *s->init) : "nil"s,
+                       s->name);
   }
 };
 

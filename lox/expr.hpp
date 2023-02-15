@@ -3,6 +3,7 @@
 #include <lox/box.hpp>
 #include <lox/token.hpp>
 
+#include <optional>
 #include <variant>
 
 namespace lox {
@@ -23,12 +24,22 @@ struct literal_expr {
   value value;
 };
 
+struct variable_expr {
+  token name;
+};
+
 using expr =
-    std::variant<literal_expr, box<struct group_expr>, box<struct unary_expr>,
+    std::variant<literal_expr, variable_expr, box<struct group_expr>,
+                 box<struct assign_expr>, box<struct unary_expr>,
                  box<struct binary_expr>, box<struct conditional_expr>>;
 
 struct group_expr {
   expr ex;
+};
+
+struct assign_expr {
+  token name;
+  expr  value;
 };
 
 struct unary_expr {
@@ -49,8 +60,6 @@ struct conditional_expr {
   expr alt;
 };
 
-using stmt = std::variant<box<struct expression_stmt>, box<struct print_stmt>>;
-
 struct expression_stmt {
   expr ex;
 };
@@ -58,5 +67,13 @@ struct expression_stmt {
 struct print_stmt {
   expr ex;
 };
+
+struct variable_stmt {
+  token               name;
+  std::optional<expr> init;
+};
+
+using stmt =
+    std::variant<box<expression_stmt>, box<print_stmt>, box<variable_stmt>>;
 
 } // namespace lox

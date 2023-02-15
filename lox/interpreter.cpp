@@ -1,6 +1,9 @@
 #include <lox/errors.hpp>
 #include <lox/interpreter.hpp>
 
+#include <fmt/core.h>
+#include <fmt/ranges.h>
+
 #include <cmath>
 #include <functional>
 #include <utility>
@@ -14,17 +17,17 @@ template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 // clang-format on
 
-static auto is_truthy(value val) -> bool {
+static auto is_truthy(value value) -> bool {
   return std::visit(overloaded{[](std::monostate&) { return false; },
                                [](bool arg) { return arg; },
                                [](auto&&) { return true; }},
-                    val);
+                    value);
 }
 
 template <typename T>
-static auto get_op(token op, value val) -> T {
+static auto get_op(token op, value value) -> T {
   try {
-    return std::get<T>(val);
+    return std::get<T>(value);
   } catch (std::bad_variant_access&) {
     throw errors::runtime_error(std::move(op), "operand must be a number");
   }
@@ -51,9 +54,21 @@ static auto get_binary_ops(token token, value left, value right)
 }
 
 auto interpreter::operator()(literal_expr const& e) -> value { return e.value; }
+
+auto interpreter::operator()(variable_expr const& e) -> value {
+  return env.get(e.name);
+}
+
 auto interpreter::operator()(box<group_expr> const& e) -> value {
   return std::visit(*this, e->ex);
 }
+
+auto interpreter::operator()(box<assign_expr> const& e) -> value {
+  value value = std::visit(*this, e->value);
+  env.assign(e->name, value);
+  return value;
+}
+
 auto interpreter::operator()(box<unary_expr> const& e) -> value {
   value right = std::visit(*this, e->right);
 
@@ -191,9 +206,16 @@ void interpreter::operator()(box<print_stmt> const& s) {
   fmt::print("{}\n", value);
 }
 
-void interpret(std::vector<stmt> const& stmts) {
+void interpreter::operator()(box<variable_stmt> const& s) {
+  value value;
+  if (s->init) value = std::visit(*this, *s->init);
+
+  env.set(s->name.lexeme, value);
+}
+
+void interpret(interpreter& interpreter, std::vector<stmt> const& stmts) {
   try {
-    for (auto const& s : stmts) { std::visit(interpreter{}, s); }
+    for (auto const& s : stmts) { std::visit(interpreter, s); }
   } catch (const errors::runtime_error& err) {
     errors::report_runtime_error(err);
   }

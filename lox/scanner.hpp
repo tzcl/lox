@@ -1,6 +1,7 @@
 #pragma once
 
 #include <lox/token.hpp>
+
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -37,8 +38,7 @@ private:
   }
   inline auto done() -> bool { return curr_ >= ssize(source_); }
 
-  inline void add_token(token_type type,
-                        value const& literal = value()) {
+  inline void add_token(token_type type, value const& literal = value()) {
     // Clang 15 doesn't support parenthesised aggregate initialisation :(
     // tokens_.emplace_back(type, substr(start_, curr_), line_, literal);
     tokens_.push_back(token{type, substr(start_, curr_), line_, literal});
@@ -58,12 +58,12 @@ private:
 
   void skip_block_comment();
 
-  std::string const source_;
+  std::string const  source_;
   std::vector<token> tokens_;
 
   int start_ = 0;
-  int curr_ = 0;
-  int line_ = 1;
+  int curr_  = 0;
+  int line_  = 1;
 
   const std::unordered_map<std::string_view, token_type> keywords = {{
       {"and", token_type::AND},

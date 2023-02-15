@@ -12,9 +12,31 @@ using enum token_type;
 // === Parse grammar ===
 auto parser::parse() -> std::vector<stmt> {
   std::vector<stmt> stmts;
-  while (!done()) { stmts.push_back(statement()); }
+  while (!done()) { stmts.push_back(declaration()); }
 
   return stmts;
+}
+
+auto parser::declaration() -> stmt {
+  try {
+    if (match({VAR})) return var_declaration();
+    return statement();
+  } catch (errors::parser_error& err) {
+    errors::report_parser_error(err);
+    synchronise();
+    // TODO: Do I need an empty statement?
+    return expression_stmt{};
+  }
+}
+
+auto parser::var_declaration() -> stmt {
+  token name = consume(IDENTIFIER, "Expect variable name");
+
+  expr init;
+  if (match({EQUAL})) { init = expression(); }
+
+  consume(SEMICOLON, "Expect ';' after variable declaration");
+  return variable_stmt{name, init};
 }
 
 auto parser::statement() -> stmt {
@@ -35,9 +57,26 @@ auto parser::expression_statement() -> stmt {
   return expression_stmt{ex};
 }
 
-auto parser::expression() -> expr {
-  // TODO: add assignment etc. here
-  return comma();
+auto parser::expression() -> expr { return assignment(); }
+
+auto parser::assignment() -> expr {
+  expr lhs = equality();
+
+  if (match({EQUAL})) {
+    token equals = prev();
+    expr  rhs    = assignment(); // Recurse here (right-associative)
+
+    if (std::holds_alternative<variable_expr>(lhs)) {
+      auto  var_ex = std::get<variable_expr>(lhs);
+      token name   = var_ex.name;
+      return assign_expr{name, rhs};
+    }
+
+    // Report but don't throw an error because we don't want to synchronise
+    errors::report(equals.line, "Invalid assignment target");
+  }
+
+  return lhs;
 }
 
 // TODO: Have to be careful with function parameters as this will cause
@@ -96,6 +135,8 @@ auto parser::primary() -> expr {
   if (match({NIL})) return literal_expr{};
 
   if (match({NUMBER, STRING})) { return literal_expr{prev().literal}; }
+
+  if (match({IDENTIFIER})) return variable_expr{prev()};
 
   if (match({LEFT_PAREN})) {
     expr ex = expression();

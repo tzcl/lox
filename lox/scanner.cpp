@@ -1,6 +1,8 @@
-#include "lox/errors.hpp"
-#include <fmt/core.h>
 #include <lox/scanner.hpp>
+
+#include <lox/errors.hpp>
+
+#include <fmt/core.h>
 
 namespace lox {
 
@@ -147,7 +149,11 @@ void scanner::number() {
 void scanner::identifier() {
   while (is_alphanumeric(peek())) next();
 
-  token_type type = keywords.at(substr(start_, curr_));
+  token_type type = [&]() {
+    if (keywords.contains(substr(start_, curr_)))
+      return keywords.at(substr(start_, curr_));
+    return token_type::IDENTIFIER;
+  }();
   add_token(type);
 }
 

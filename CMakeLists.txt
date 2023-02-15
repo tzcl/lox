@@ -22,7 +22,7 @@ add_compile_options("-Weverything"  "-Wno-c++98-compat" "-Wno-padded"
   "-Wno-sign-conversion" "-Wno-missing-field-initializers" "-Wno-switch-enum")
 
 set(SOURCES lox/main.cpp lox/token.cpp lox/scanner.cpp lox/errors.cpp 
-  lox/parser.cpp lox/interpreter.cpp)
+  lox/parser.cpp lox/interpreter.cpp lox/environment.cpp)
 
 add_executable(lox ${SOURCES})
 

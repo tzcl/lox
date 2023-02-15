@@ -16,10 +16,13 @@ public:
   auto parse() -> std::vector<stmt>;
 
 private:
+  auto declaration() -> stmt;
+  auto var_declaration() -> stmt;
   auto statement() -> stmt;
   auto print_statement() -> stmt;
   auto expression_statement() -> stmt;
   auto expression() -> expr;
+  auto assignment() -> expr;
   auto comma() -> expr;
   auto conditional() -> expr;
   auto equality() -> expr;
