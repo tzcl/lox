@@ -21,7 +21,7 @@ static auto is_truthy(value val) -> bool {
 }
 
 template <typename T>
-static auto check_operand(token op, value val) -> T {
+static auto get_op(token op, value val) -> T {
   try {
     return std::get<T>(val);
   } catch (std::bad_variant_access&) {
@@ -29,10 +29,21 @@ static auto check_operand(token op, value val) -> T {
   }
 }
 
-template <typename T, typename Op>
-static auto check_operands(token token, value left, Op op, value right) -> T {
+template <typename T>
+struct binary_ops {
+  T left, right;
+};
+
+template <typename T>
+static auto check_binary_ops(value left, value right) -> bool {
+  return std::holds_alternative<T>(left) && std::holds_alternative<T>(right);
+}
+
+template <typename T>
+static auto get_binary_ops(token token, value left, value right)
+    -> binary_ops<T> {
   try {
-    return op(std::get<T>(left), std::get<T>(right));
+    return {std::get<T>(left), std::get<T>(right)};
   } catch (std::bad_variant_access&) {
     throw errors::runtime_error(std::move(token), "operands must be numbers");
   }
@@ -49,7 +60,7 @@ auto interpreter::operator()(box<unary_expr> const& e) -> value {
   case BANG:
     return !is_truthy(right);
   case MINUS:
-    return -check_operand<double>(e->op, right);
+    return -get_op<double>(e->op, right);
   default:
     break;
   }
@@ -69,35 +80,89 @@ auto interpreter::operator()(box<binary_expr> const& e) -> value {
   case EQUAL_EQUAL:
     return left == right;
   case GREATER:
-    return check_operands<double>(e->op, left, std::greater<double>{}, right);
-  case GREATER_EQUAL:
-    return check_operands<double>(e->op, left, std::greater_equal<double>{},
-                                  right);
-  case LESS:
-    return check_operands<double>(e->op, left, std::less<double>{}, right);
-  case LESS_EQUAL:
-    return check_operands<double>(e->op, left, std::less_equal<double>{},
-                                  right);
-  case MINUS:
-    return check_operands<double>(e->op, left, std::plus<double>{}, right);
-  case PLUS:
-    if (std::holds_alternative<double>(left) &&
-        std::holds_alternative<double>(right)) {
-      return std::get<double>(left) + std::get<double>(right);
+    if (check_binary_ops<double>(left, right)) {
+      auto ops = get_binary_ops<double>(e->op, left, right);
+      return ops.left > ops.right;
     }
-
-    if (std::holds_alternative<std::string>(left) &&
-        std::holds_alternative<std::string>(right)) {
-      return std::get<std::string>(left) + std::get<std::string>(right);
+    if (check_binary_ops<std::string>(left, right)) {
+      auto ops = get_binary_ops<std::string>(e->op, left, right);
+      return ops.left > ops.right;
     }
 
     throw errors::runtime_error(e->op,
                                 "operands must be two numbers or two strings");
-  case SLASH:
-    return check_operands<double>(e->op, left, std::divides<double>{}, right);
-  case STAR:
-    return check_operands<double>(e->op, left, std::multiplies<double>{},
-                                  right);
+  case GREATER_EQUAL:
+    if (check_binary_ops<double>(left, right)) {
+      auto ops = get_binary_ops<double>(e->op, left, right);
+      return ops.left >= ops.right;
+    }
+    if (check_binary_ops<std::string>(left, right)) {
+      auto ops = get_binary_ops<std::string>(e->op, left, right);
+      return ops.left >= ops.right;
+    }
+
+    throw errors::runtime_error(e->op,
+                                "operands must be two numbers or two strings");
+
+  case LESS:
+    if (check_binary_ops<double>(left, right)) {
+      auto ops = get_binary_ops<double>(e->op, left, right);
+      return ops.left < ops.right;
+    }
+    if (check_binary_ops<std::string>(left, right)) {
+      auto ops = get_binary_ops<std::string>(e->op, left, right);
+      return ops.left < ops.right;
+    }
+
+    throw errors::runtime_error(e->op,
+                                "operands must be two numbers or two strings");
+  case LESS_EQUAL:
+    if (check_binary_ops<double>(left, right)) {
+      auto ops = get_binary_ops<double>(e->op, left, right);
+      return ops.left <= ops.right;
+    }
+    if (check_binary_ops<std::string>(left, right)) {
+      auto ops = get_binary_ops<std::string>(e->op, left, right);
+      return ops.left <= ops.right;
+    }
+
+    throw errors::runtime_error(e->op,
+                                "operands must be two numbers or two strings");
+  case MINUS: {
+    auto ops = get_binary_ops<double>(e->op, left, right);
+    return ops.left - ops.right;
+  }
+  case PLUS:
+    if (check_binary_ops<double>(left, right)) {
+      auto ops = get_binary_ops<double>(e->op, left, right);
+      return ops.left + ops.right;
+    }
+    if (check_binary_ops<std::string>(left, right)) {
+      auto ops = get_binary_ops<std::string>(e->op, left, right);
+      return ops.left + ops.right;
+    }
+    if (std::holds_alternative<std::string>(left)) {
+      auto lval = std::get<std::string>(left);
+      auto rval = to_string(right);
+      return lval + rval;
+    }
+    if (std::holds_alternative<std::string>(right)) {
+      auto lval = to_string(left);
+      auto rval = std::get<std::string>(right);
+      return lval + rval;
+    }
+
+    throw errors::runtime_error(e->op, "operands are incompatible");
+  case SLASH: {
+    auto ops = get_binary_ops<double>(e->op, left, right);
+    if (std::abs(ops.right) < 1e-10)
+      throw errors::runtime_error(e->op, "division by zero");
+    return ops.left / ops.right;
+  }
+  case STAR: {
+    auto ops = get_binary_ops<double>(e->op, left, right);
+    return ops.left * ops.right;
+  }
   default:
     break;
   }
@@ -107,10 +172,10 @@ auto interpreter::operator()(box<binary_expr> const& e) -> value {
 
 auto interpreter::operator()(box<conditional_expr> const& e) -> value {
   value cond = std::visit(*this, e->cond);
-  
+
   // This implicitly converts any expression into a bool (may be unexpected)
   if (is_truthy(cond)) {
-    return std::visit(*this, e->conseq);    
+    return std::visit(*this, e->conseq);
   } else {
     return std::visit(*this, e->alt);
   }
@@ -119,7 +184,7 @@ auto interpreter::operator()(box<conditional_expr> const& e) -> value {
 void interpret(expr ex) {
   try {
     value val = std::visit(interpreter{}, ex);
-    fmt::print("{}\n", to_string(val));
+    fmt::print("{}\n", print_value(val));
   } catch (const errors::runtime_error& err) {
     errors::report_runtime_error(err);
   }

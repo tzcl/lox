@@ -36,10 +36,20 @@ template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 // clang-format on
 
-auto to_string(value literal) -> std::string {
+auto print_value(value literal) -> std::string {
   using namespace std::string_literals;
   return std::visit(
       overloaded{[](std::monostate) { return "nil"s; },
+                 [](bool arg) { return arg ? "true"s : "false"s; },
+                 [](double arg) { return fmt::format("{}", arg); },
+                 [](std::string arg) { return fmt::format("\"{}\"", arg); }},
+      literal);
+}
+
+auto to_string(value literal) -> std::string {
+  using namespace std::string_literals;
+  return std::visit(
+      overloaded{[](std::monostate) { return ""s; },
                  [](bool arg) { return arg ? "true"s : "false"s; },
                  [](double arg) { return fmt::format("{}", arg); },
                  [](std::string arg) { return fmt::format("\"{}\"", arg); }},

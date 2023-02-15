@@ -40,6 +40,7 @@ enum class token_type {
 // allows for token_literal to be default-constructed.
 using value = std::variant<std::monostate, bool, double, std::string>;
 
+auto print_value(value literal) -> std::string;
 auto to_string(value literal) -> std::string;
 
 struct token {
@@ -56,7 +57,7 @@ struct token {
 template <> struct fmt::formatter<lox::value> : formatter<std::string> {
   template <typename FormatContext>
   auto format(lox::value const& literal, FormatContext& ctx) const {
-    return formatter<std::string>::format(lox::to_string(literal), ctx);
+    return formatter<std::string>::format(lox::print_value(literal), ctx);
   }
 };
   
