@@ -5,6 +5,7 @@
 
 #include <optional>
 #include <variant>
+#include <vector>
 
 namespace lox {
 
@@ -73,7 +74,11 @@ struct variable_stmt {
   std::optional<expr> init;
 };
 
-using stmt =
-    std::variant<box<expression_stmt>, box<print_stmt>, box<variable_stmt>>;
+using stmt = std::variant<box<expression_stmt>, box<print_stmt>,
+                          box<variable_stmt>, struct block_stmt>;
+
+struct block_stmt {
+  std::vector<stmt> stmts;
+};
 
 } // namespace lox

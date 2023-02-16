@@ -41,8 +41,17 @@ auto parser::var_declaration() -> stmt {
 
 auto parser::statement() -> stmt {
   if (match({PRINT})) return print_statement();
+  if (match({LEFT_BRACE})) return block_stmt{block_statement()};
 
   return expression_statement();
+}
+
+auto parser::block_statement() -> std::vector<stmt> {
+  std::vector<stmt> stmts;
+  while (!check(RIGHT_BRACE) && !done()) stmts.push_back(declaration());
+  consume(RIGHT_BRACE, "Expect '}' after block");
+
+  return stmts;
 }
 
 auto parser::print_statement() -> stmt {

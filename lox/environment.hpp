@@ -16,7 +16,7 @@ struct environment {
 
   std::unordered_map<std::string, value> values_;
 
-  void set(std::string name, value value) { values_[name] = std::move(value); };
+  void set(std::string name, value value) { values_[name] = std::move(value); }
   void assign(token name, value value);
   auto get(token name) -> value;
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <lox/environment.hpp>
-#include <lox/expr.hpp>
+#include <lox/grammar.hpp>
 #include <lox/token.hpp>
 
 #include <string>
@@ -10,9 +10,13 @@
 
 namespace lox {
 
-struct interpreter {
-  environment env;
+class interpreter {
+private:
+  environment env_ = environment(nullptr);
 
+  void execute_block(std::vector<stmt> const& stmts, environment env);
+
+public:
   auto operator()(literal_expr const& e) -> value;
   auto operator()(variable_expr const& e) -> value;
   auto operator()(box<group_expr> const& e) -> value;
@@ -24,6 +28,7 @@ struct interpreter {
   void operator()(box<expression_stmt> const& s);
   void operator()(box<print_stmt> const& s);
   void operator()(box<variable_stmt> const& s);
+  void operator()(block_stmt const& s);
 };
 
 void interpret(interpreter& interpreter, std::vector<stmt> const& stmts);

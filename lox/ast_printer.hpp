@@ -1,9 +1,10 @@
 #pragma once
 
-#include <lox/expr.hpp>
+#include <lox/grammar.hpp>
 #include <lox/token.hpp>
 
 #include <fmt/core.h>
+#include <fmt/ranges.h>
 
 #include <algorithm>
 #include <string>
@@ -23,46 +24,6 @@ auto print(printer auto p, std::vector<stmt> const& stmts)
 
   return output;
 }
-
-// Note, instead of declaring a struct, you can use a trivial struct (normally
-// called overload) to let you pass lambdas to a visitor.
-
-struct sexp_printer {
-  auto operator()(literal_expr const& e) -> std::string {
-    return fmt::format("{}", e.value);
-  }
-  auto operator()(variable_expr const& e) -> std::string {
-    return fmt::format("{}", e.name);
-  }
-  auto operator()(box<group_expr> const& e) -> std::string {
-    return fmt::format("(group {})", std::visit(*this, e->ex));
-  }
-  auto operator()(box<assign_expr> const& e) -> std::string {
-    return fmt::format("(let {} {})", e->name, std::visit(*this, e->value));
-  }
-  auto operator()(box<unary_expr> const& e) -> std::string {
-    return fmt::format("({} {})", e->op.lexeme, std::visit(*this, e->right));
-  }
-  auto operator()(box<binary_expr> const& e) -> std::string {
-    return fmt::format("({} {} {})", e->op.lexeme, std::visit(*this, e->left),
-                       std::visit(*this, e->right));
-  }
-  auto operator()(box<conditional_expr> const& e) -> std::string {
-    return fmt::format("(if {} ({}) ({}))", std::visit(*this, e->cond),
-                       std::visit(*this, e->conseq), std::visit(*this, e->alt));
-  }
-  auto operator()(box<expression_stmt> const& s) -> std::string {
-    return fmt::format("(expr {})", std::visit(*this, s->ex));
-  }
-  auto operator()(box<print_stmt> const& s) -> std::string {
-    return fmt::format("(print {})", std::visit(*this, s->ex));
-  }
-  auto operator()(box<variable_stmt> const& s) -> std::string {
-    using namespace std::string_literals;
-    return fmt::format("({} ({}))", s->name,
-                       s->init ? std::visit(*this, *s->init) : "nil"s);
-  }
-};
 
 struct ast_printer {
   auto operator()(literal_expr const& e) -> std::string {
@@ -100,42 +61,11 @@ struct ast_printer {
     return fmt::format("{}:{}", s->name.lexeme,
                        s->init ? std::visit(*this, *s->init) : "nil"s);
   }
-};
-
-struct rpn_printer {
-  auto operator()(literal_expr const& e) -> std::string {
-    return fmt::format("{}", e.value);
-  }
-  auto operator()(variable_expr const& e) -> std::string {
-    return fmt::format("{}", e.name);
-  }
-  auto operator()(box<group_expr> const& e) -> std::string {
-    return fmt::format("{}", std::visit(*this, e->ex));
-  }
-  auto operator()(box<assign_expr> const& e) -> std::string {
-    return fmt::format("({} := {})", e->name, std::visit(*this, e->value));
-  }
-  auto operator()(box<unary_expr> const& e) -> std::string {
-    return fmt::format("{} {}", std::visit(*this, e->right), e->op.lexeme);
-  }
-  auto operator()(box<binary_expr> const& e) -> std::string {
-    return fmt::format("{} {} {}", std::visit(*this, e->left),
-                       std::visit(*this, e->right), e->op.lexeme);
-  }
-  auto operator()(box<conditional_expr> const& e) -> std::string {
-    return fmt::format("{} {} {} if", std::visit(*this, e->conseq),
-                       std::visit(*this, e->alt), std::visit(*this, e->cond));
-  }
-  auto operator()(box<expression_stmt> const& s) -> std::string {
-    return fmt::format("{} expr", std::visit(*this, s->ex));
-  }
-  auto operator()(box<print_stmt> const& s) -> std::string {
-    return fmt::format("{} print", std::visit(*this, s->ex));
-  }
-  auto operator()(box<variable_stmt> const& s) -> std::string {
-    using namespace std::string_literals;
-    return fmt::format("{} {}", s->init ? std::visit(*this, *s->init) : "nil"s,
-                       s->name);
+  auto operator()(block_stmt const& s) -> std::string {
+    std::vector<std::string> stmts(std::size(s.stmts));
+    std::ranges::transform(s.stmts, std::begin(stmts),
+                           [this](stmt ss) { return std::visit(*this, ss); });
+    return fmt::format("{{ {} }}", fmt::join(stmts, " "));
   }
 };
 

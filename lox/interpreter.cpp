@@ -56,7 +56,7 @@ static auto get_binary_ops(token token, value left, value right)
 auto interpreter::operator()(literal_expr const& e) -> value { return e.value; }
 
 auto interpreter::operator()(variable_expr const& e) -> value {
-  return env.get(e.name);
+  return env_.get(e.name);
 }
 
 auto interpreter::operator()(box<group_expr> const& e) -> value {
@@ -65,7 +65,7 @@ auto interpreter::operator()(box<group_expr> const& e) -> value {
 
 auto interpreter::operator()(box<assign_expr> const& e) -> value {
   value value = std::visit(*this, e->value);
-  env.assign(e->name, value);
+  env_.assign(e->name, value);
   return value;
 }
 
@@ -210,7 +210,22 @@ void interpreter::operator()(box<variable_stmt> const& s) {
   value value;
   if (s->init) value = std::visit(*this, *s->init);
 
-  env.set(s->name.lexeme, value);
+  env_.set(s->name.lexeme, value);
+}
+
+void interpreter::operator()(block_stmt const& s) {
+  execute_block(s.stmts, environment(env_));
+}
+
+void interpreter::execute_block(std::vector<stmt> const& stmts,
+                                environment              env) {
+  environment prev = env_;
+  env_             = std::move(env);
+
+  for (const auto& s : stmts) { std::visit(*this, s); }
+
+  fmt::print("Resetting environment");
+  env_ = prev;
 }
 
 void interpret(interpreter& interpreter, std::vector<stmt> const& stmts) {

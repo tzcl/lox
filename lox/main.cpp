@@ -1,6 +1,6 @@
 #include <lox/ast_printer.hpp>
 #include <lox/errors.hpp>
-#include <lox/expr.hpp>
+#include <lox/grammar.hpp>
 #include <lox/interpreter.hpp>
 #include <lox/parser.hpp>
 #include <lox/scanner.hpp>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lox/expr.hpp>
+#include <lox/grammar.hpp>
 #include <lox/token.hpp>
 
 #include <string_view>
@@ -21,6 +21,7 @@ private:
   auto statement() -> stmt;
   auto print_statement() -> stmt;
   auto expression_statement() -> stmt;
+  auto block_statement() -> std::vector<stmt>;
   auto expression() -> expr;
   auto assignment() -> expr;
   auto comma() -> expr;
