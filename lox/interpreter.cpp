@@ -198,7 +198,7 @@ auto interpreter::operator()(box<conditional_expr> const& e) -> value {
 
   // This implicitly converts any expression into a bool (may be unexpected)
   if (is_truthy(cond)) {
-    return std::visit(*this, e->conseq);
+    return std::visit(*this, e->then);
   } else {
     return std::visit(*this, e->alt);
   }

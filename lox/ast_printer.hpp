@@ -49,7 +49,7 @@ struct ast_printer {
   }
   auto operator()(box<conditional_expr> const& e) -> std::string {
     return fmt::format("(if {} then {} else {})", std::visit(*this, e->cond),
-                       std::visit(*this, e->conseq), std::visit(*this, e->alt));
+                       std::visit(*this, e->then), std::visit(*this, e->alt));
   }
   auto operator()(box<expression_stmt> const& s) -> std::string {
     return fmt::format("expr {}", std::visit(*this, s->ex));

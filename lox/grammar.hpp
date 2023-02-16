@@ -57,7 +57,7 @@ struct binary_expr {
 struct conditional_expr {
   // TODO: Should this keep track of tokens? How to implement properly?
   expr cond;
-  expr conseq;
+  expr then;
   expr alt;
 };
 
@@ -74,11 +74,17 @@ struct variable_stmt {
   std::optional<expr> init;
 };
 
-using stmt =
-    std::variant<expression_stmt, print_stmt, variable_stmt, struct block_stmt>;
+using stmt = std::variant<expression_stmt, print_stmt, variable_stmt,
+                          struct block_stmt, box<struct if_stmt>>;
 
 struct block_stmt {
   std::vector<stmt> stmts;
+};
+
+struct if_stmt {
+  expr cond;
+  stmt then;
+  stmt alt;
 };
 
 } // namespace lox
