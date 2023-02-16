@@ -34,7 +34,8 @@ void report_parser_error(parser_error const& err) {
 }
 
 void report_runtime_error(runtime_error const& err) {
-  fmt::print("[line {}] Error: {}\n", err.token.line, err.what());
+  fmt::print("[line {}] Error: '{}' {}\n", err.token.line, err.token.lexeme,
+             err.what());
   has_runtime_error_ = true;
 }
 

@@ -36,11 +36,10 @@ struct ast_printer {
     return fmt::format("(group {})", std::visit(*this, e->ex));
   }
   auto operator()(box<assign_expr> const& e) -> std::string {
-    return fmt::format("({} := {})", e->name.lexeme,
-                       std::visit(*this, e->value));
+    return fmt::format("{} := {}", e->name.lexeme, std::visit(*this, e->value));
   }
   auto operator()(box<unary_expr> const& e) -> std::string {
-    return fmt::format("({} {})", e->op.lexeme, std::visit(*this, e->right));
+    return fmt::format("({}{})", e->op.lexeme, std::visit(*this, e->right));
   }
   auto operator()(box<binary_expr> const& e) -> std::string {
     return fmt::format("({} {} {})", std::visit(*this, e->left), e->op.lexeme,
@@ -51,10 +50,10 @@ struct ast_printer {
                        std::visit(*this, e->conseq), std::visit(*this, e->alt));
   }
   auto operator()(box<expression_stmt> const& s) -> std::string {
-    return fmt::format("expr({})", std::visit(*this, s->ex));
+    return fmt::format("expr {}", std::visit(*this, s->ex));
   }
   auto operator()(box<print_stmt> const& s) -> std::string {
-    return fmt::format("print({})", std::visit(*this, s->ex));
+    return fmt::format("print {}", std::visit(*this, s->ex));
   }
   auto operator()(box<variable_stmt> const& s) -> std::string {
     using namespace std::string_literals;

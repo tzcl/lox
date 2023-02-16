@@ -206,7 +206,7 @@ auto parser::left_assoc(R rule, std::initializer_list<token_type> types)
 }
 
 auto parser::match(std::initializer_list<token_type> types) -> bool {
-  for (token_type const& type : types) {
+  for (token_type const& type : types) { // NOLINT(readability-use-anyofallof)
     if (check(type)) {
       next();
       return true;

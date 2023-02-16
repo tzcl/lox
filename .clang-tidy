@@ -7,13 +7,16 @@ Checks: "*,
         -google-*,
         -llvm*,
         -zircon-*,
-        -readability-braces-around-statements,
+        -bugprone-unchecked-optional-access,
         -hicpp-braces-around-statements,
+        -readability-braces-around-statements,
         -readability-else-after-return,
         -readability-static-accessed-through-instance,
         -readability-avoid-const-params-in-decls,
+        -readability-function-cognitive-complexity,
         -cppcoreguidelines-non-private-member-variables-in-classes,
-        -misc-non-private-member-variables-in-classes"
+        -misc-non-private-member-variables-in-classes,
+        -misc-no-recursion"
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     none

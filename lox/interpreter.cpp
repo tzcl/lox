@@ -10,6 +10,8 @@
 
 namespace lox {
 
+const static double EPSILON = 1e-10;
+
 using enum token_type;
 
 // clang-format off
@@ -56,7 +58,7 @@ static auto get_binary_ops(token token, value left, value right)
 auto interpreter::operator()(literal_expr const& e) -> value { return e.value; }
 
 auto interpreter::operator()(variable_expr const& e) -> value {
-  return env_.get(e.name);
+  return env.get(e.name);
 }
 
 auto interpreter::operator()(box<group_expr> const& e) -> value {
@@ -65,7 +67,7 @@ auto interpreter::operator()(box<group_expr> const& e) -> value {
 
 auto interpreter::operator()(box<assign_expr> const& e) -> value {
   value value = std::visit(*this, e->value);
-  env_.assign(e->name, value);
+  env.assign(e->name, value);
   return value;
 }
 
@@ -171,7 +173,7 @@ auto interpreter::operator()(box<binary_expr> const& e) -> value {
     throw errors::runtime_error(e->op, "operands are incompatible");
   case SLASH: {
     auto ops = get_binary_ops<double>(e->op, left, right);
-    if (std::abs(ops.right) < 1e-10)
+    if (std::abs(ops.right) < EPSILON)
       throw errors::runtime_error(e->op, "division by zero");
     return ops.left / ops.right;
   }
@@ -210,24 +212,15 @@ void interpreter::operator()(box<variable_stmt> const& s) {
   value value;
   if (s->init) value = std::visit(*this, *s->init);
 
-  env_.set(s->name.lexeme, value);
+  env.set(s->name.lexeme, value);
 }
 
-void interpreter::operator()(block_stmt const& s) {
-  execute_block(s.stmts, environment(env_));
+void interpreter::operator()(block_stmt const& s) const {
+  interpreter interpreter{environment(this->env)}; // create new scope
+  for (const auto& ss : s.stmts) { std::visit(interpreter, ss); }
 }
 
-void interpreter::execute_block(std::vector<stmt> const& stmts,
-                                environment              env) {
-  environment prev = env_;
-  env_             = std::move(env);
-
-  for (const auto& s : stmts) { std::visit(*this, s); }
-
-  fmt::print("Resetting environment");
-  env_ = prev;
-}
-
+// Use reference because we want an in-out parameter.
 void interpret(interpreter& interpreter, std::vector<stmt> const& stmts) {
   try {
     for (auto const& s : stmts) { std::visit(interpreter, s); }

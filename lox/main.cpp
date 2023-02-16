@@ -54,7 +54,7 @@ static auto run_file(std::string const& path) -> int {
   const std::ostringstream ss;
   file >> ss.rdbuf();
 
-  lox::interpreter interpreter{};
+  lox::interpreter interpreter{lox::environment(nullptr)};
 
   int err = run(interpreter, ss.str());
   if (err > 0) return err;
@@ -67,7 +67,7 @@ static auto run_file(std::string const& path) -> int {
 [[noreturn]] static void run_prompt() {
   fmt::print("Running prompt\n");
   std::string      line;
-  lox::interpreter interpreter{};
+  lox::interpreter interpreter{lox::environment(nullptr)};
   while (true) {
     fmt::print("> ");
     std::getline(std::cin, line);
@@ -83,7 +83,7 @@ auto main(int argc, char* argv[]) -> int {
     fmt::print("Usage: lox [script]\n");
     return EX_USAGE;
   } else if (argc == 2) {
-    int err = run_file(argv[1]);
+    int err = run_file(argv[1]); // NOLINT
     if (err > 0) return err;
   } else {
     run_prompt();

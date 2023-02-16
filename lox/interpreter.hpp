@@ -10,13 +10,9 @@
 
 namespace lox {
 
-class interpreter {
-private:
-  environment env_ = environment(nullptr);
+struct interpreter {
+  environment env;
 
-  void execute_block(std::vector<stmt> const& stmts, environment env);
-
-public:
   auto operator()(literal_expr const& e) -> value;
   auto operator()(variable_expr const& e) -> value;
   auto operator()(box<group_expr> const& e) -> value;
@@ -28,7 +24,7 @@ public:
   void operator()(box<expression_stmt> const& s);
   void operator()(box<print_stmt> const& s);
   void operator()(box<variable_stmt> const& s);
-  void operator()(block_stmt const& s);
+  void operator()(block_stmt const& s) const;
 };
 
 void interpret(interpreter& interpreter, std::vector<stmt> const& stmts);
