@@ -26,6 +26,8 @@ auto print(printer auto p, std::vector<stmt> const& stmts)
 }
 
 struct ast_printer {
+  int indent = 0;
+
   auto operator()(literal_expr const& e) -> std::string {
     return fmt::format("{}", e.value);
   }
@@ -62,9 +64,12 @@ struct ast_printer {
   }
   auto operator()(block_stmt const& s) -> std::string {
     std::vector<std::string> stmts(std::size(s.stmts));
-    std::ranges::transform(s.stmts, std::begin(stmts),
-                           [this](stmt ss) { return std::visit(*this, ss); });
-    return fmt::format("{{ {} }}", fmt::join(stmts, " "));
+    std::ranges::transform(s.stmts, std::begin(stmts), [this](stmt ss) {
+      return fmt::format("{:{}}{}", "", this->indent + 2,
+                         std::visit(ast_printer{this->indent + 2}, ss));
+    });
+    return fmt::format("{{\n{}\n{:{}}}}", fmt::join(stmts, "\n"), "",
+                       this->indent);
   }
 };
 
