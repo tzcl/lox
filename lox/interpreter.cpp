@@ -16,6 +16,7 @@ using enum token_type;
 
 // clang-format off
 template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; }; 
+// Still need deduction guide with Clang 15
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 // clang-format on
 
@@ -58,7 +59,11 @@ static auto get_binary_ops(token token, value left, value right)
 auto interpreter::operator()(literal_expr const& e) -> value { return e.value; }
 
 auto interpreter::operator()(variable_expr const& e) -> value {
-  return env.get(e.name);
+  value value = env.get(e.name);
+  if (value.index() == 0)
+    throw errors::runtime_error(e.name, "variable is uninitialised");
+
+  return value;
 }
 
 auto interpreter::operator()(box<group_expr> const& e) -> value {
@@ -220,10 +225,18 @@ void interpreter::operator()(block_stmt const& s) const {
   for (const auto& ss : s.stmts) { std::visit(interpreter, ss); }
 }
 
-// Use reference because we want an in-out parameter.
+// Use a reference because we want an in-out parameter.
 void interpret(interpreter& interpreter, std::vector<stmt> const& stmts) {
   try {
-    for (auto const& s : stmts) { std::visit(interpreter, s); }
+    for (auto const& s : stmts) {
+      if (std::holds_alternative<expression_stmt>(s)) {
+        auto expr  = std::get<expression_stmt>(s);
+        auto value = std::visit(interpreter, expr.ex);
+        fmt::print("{}\n", to_string(value));
+      } else {
+        std::visit(interpreter, s);
+      }
+    }
   } catch (const errors::runtime_error& err) {
     errors::report_runtime_error(err);
   }
