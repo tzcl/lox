@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <optional>
 #include <utility>
 
 namespace lox {
@@ -24,7 +25,6 @@ auto parser::declaration() -> stmt {
   } catch (errors::parser_error& err) {
     errors::report_parser_error(err);
     synchronise();
-    // TODO: Do I need an empty statement?
     return expression_stmt{};
   }
 }
@@ -40,10 +40,71 @@ auto parser::var_declaration() -> stmt {
 }
 
 auto parser::statement() -> stmt {
+  if (match({IF})) return if_statement();
   if (match({PRINT})) return print_statement();
+  if (match({FOR})) return for_statement();
+  if (match({WHILE})) return while_statement();
   if (match({LEFT_BRACE})) return block_stmt{block_statement()};
 
   return expression_statement();
+}
+
+auto parser::if_statement() -> stmt {
+  consume(LEFT_PAREN, "Expect '(' after 'if'");
+  expr cond = expression();
+  consume(RIGHT_PAREN, "Expect ')' after if condition");
+
+  stmt then = statement();
+  if (match({ELSE})) {
+    stmt alt = statement();
+    return if_stmt{cond, then, alt};
+  }
+
+  return if_stmt{cond, then};
+}
+auto parser::print_statement() -> stmt {
+  expr value = expression();
+  consume(SEMICOLON, "Expect ';' after value");
+  return print_stmt{value};
+}
+
+auto parser::for_statement() -> stmt {
+  consume(LEFT_PAREN, "Expect '(' after 'for'");
+
+  std::optional<stmt> init;
+  if (!match({SEMICOLON})) {
+    if (match({VAR})) init = var_declaration();
+    else init = expression_statement();
+  }
+
+  std::optional<expr> cond;
+  if (!check(SEMICOLON)) cond = expression();
+  consume(SEMICOLON, "Expect ';' after loop condition");
+
+  std::optional<expr> after;
+  if (!check(RIGHT_PAREN)) after = expression();
+  consume(RIGHT_PAREN, "Expect ')' after for clauses");
+
+  stmt body = statement();
+
+  // Rewrite for loop into equivalent while loop
+  if (after) { body = block_stmt{{body, expression_stmt{*after}}}; }
+
+  if (!cond) cond = literal_expr{true};
+  body = while_stmt{*cond, body};
+
+  if (init) body = block_stmt{{*init, body}};
+
+  return body;
+}
+
+auto parser::while_statement() -> stmt {
+  consume(LEFT_PAREN, "Expect '(' after 'while'");
+  expr cond = expression();
+  consume(RIGHT_PAREN, "Expect ')' after condition");
+  stmt body = statement();
+
+  return while_stmt{cond, body};
 }
 
 auto parser::block_statement() -> std::vector<stmt> {
@@ -52,12 +113,6 @@ auto parser::block_statement() -> std::vector<stmt> {
   consume(RIGHT_BRACE, "Expect '}' after block");
 
   return stmts;
-}
-
-auto parser::print_statement() -> stmt {
-  expr value = expression();
-  consume(SEMICOLON, "Expect ';' after value");
-  return print_stmt{value};
 }
 
 auto parser::expression_statement() -> stmt {
@@ -69,7 +124,7 @@ auto parser::expression_statement() -> stmt {
 auto parser::expression() -> expr { return assignment(); }
 
 auto parser::assignment() -> expr {
-  expr lhs = equality();
+  expr lhs = logic_or();
 
   if (match({EQUAL})) {
     token equals = prev();
@@ -88,10 +143,19 @@ auto parser::assignment() -> expr {
   return lhs;
 }
 
+auto parser::logic_or() -> expr {
+  return left_assoc<logical_expr>(&parser::logic_and, {OR});
+}
+
+// TODO: Should this call equality?
+auto parser::logic_and() -> expr {
+  return left_assoc<logical_expr>(&parser::comma, {AND});
+}
+
 // TODO: Have to be careful with function parameters as this will cause
 // f(1, 2) to be parsed as f((1, 2)).
 auto parser::comma() -> expr {
-  return left_assoc(&parser::conditional, {COMMA});
+  return left_assoc<binary_expr>(&parser::conditional, {COMMA});
 }
 
 auto parser::conditional() -> expr {
@@ -113,19 +177,21 @@ auto parser::conditional() -> expr {
 }
 
 auto parser::equality() -> expr {
-  return left_assoc(&parser::comparison, {BANG_EQUAL, EQUAL_EQUAL});
+  return left_assoc<binary_expr>(&parser::comparison,
+                                 {BANG_EQUAL, EQUAL_EQUAL});
 }
 
 auto parser::comparison() -> expr {
-  return left_assoc(&parser::term, {GREATER, GREATER_EQUAL, LESS, LESS_EQUAL});
+  return left_assoc<binary_expr>(&parser::term,
+                                 {GREATER, GREATER_EQUAL, LESS, LESS_EQUAL});
 }
 
 auto parser::term() -> expr {
-  return left_assoc(&parser::factor, {MINUS, PLUS});
+  return left_assoc<binary_expr>(&parser::factor, {MINUS, PLUS});
 }
 
 auto parser::factor() -> expr {
-  return left_assoc(&parser::unary, {SLASH, STAR});
+  return left_assoc<binary_expr>(&parser::unary, {SLASH, STAR});
 }
 
 auto parser::unary() -> expr {
@@ -191,7 +257,7 @@ void parser::missing_binary_op() {
   }
 }
 
-template <typename R>
+template <typename A, typename R>
 auto parser::left_assoc(R rule, std::initializer_list<token_type> types)
     -> expr {
   expr ex = (this->*rule)();
@@ -199,7 +265,7 @@ auto parser::left_assoc(R rule, std::initializer_list<token_type> types)
   while (match(types)) {
     token op    = prev();
     expr  right = (this->*rule)();
-    ex          = binary_expr{ex, op, right};
+    ex          = A{ex, op, right};
   }
 
   return ex;

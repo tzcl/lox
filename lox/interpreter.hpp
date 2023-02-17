@@ -18,13 +18,16 @@ struct interpreter {
   auto operator()(box<group_expr> const& e) -> value;
   auto operator()(box<assign_expr> const& e) -> value;
   auto operator()(box<unary_expr> const& e) -> value;
+  auto operator()(box<logical_expr> const& e) -> value;
   auto operator()(box<binary_expr> const& e) -> value;
   auto operator()(box<conditional_expr> const& e) -> value;
 
-  void operator()(box<expression_stmt> const& s);
-  void operator()(box<print_stmt> const& s);
-  void operator()(box<variable_stmt> const& s);
-  void operator()(block_stmt const& s) const;
+  void operator()(expression_stmt const& s);
+  void operator()(print_stmt const& s);
+  void operator()(variable_stmt const& s);
+  void operator()(block_stmt const& s);
+  void operator()(box<if_stmt> const& s);
+  void operator()(box<while_stmt> const& s);
 };
 
 void interpret(interpreter& interpreter, std::vector<stmt> const& stmts);

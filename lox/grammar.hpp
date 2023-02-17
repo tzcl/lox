@@ -29,10 +29,10 @@ struct variable_expr {
   token name;
 };
 
-using expr =
-    std::variant<literal_expr, variable_expr, box<struct group_expr>,
-                 box<struct assign_expr>, box<struct unary_expr>,
-                 box<struct binary_expr>, box<struct conditional_expr>>;
+using expr = std::variant<literal_expr, variable_expr, box<struct group_expr>,
+                          box<struct assign_expr>, box<struct unary_expr>,
+                          box<struct logical_expr>, box<struct binary_expr>,
+                          box<struct conditional_expr>>;
 
 struct group_expr {
   expr ex;
@@ -48,6 +48,12 @@ struct unary_expr {
   expr  right;
 };
 
+struct logical_expr {
+  expr  left;
+  token op;
+  expr  right;
+};
+
 struct binary_expr {
   expr  left;
   token op;
@@ -55,7 +61,6 @@ struct binary_expr {
 };
 
 struct conditional_expr {
-  // TODO: Should this keep track of tokens? How to implement properly?
   expr cond;
   expr then;
   expr alt;
@@ -69,22 +74,34 @@ struct print_stmt {
   expr ex;
 };
 
+struct var_stmt {
+  token name;
+  expr  init;
+};
+
 struct variable_stmt {
   token               name;
   std::optional<expr> init;
 };
 
-using stmt = std::variant<expression_stmt, print_stmt, variable_stmt,
-                          struct block_stmt, box<struct if_stmt>>;
+using stmt =
+    std::variant<expression_stmt, print_stmt, variable_stmt, struct block_stmt,
+                 box<struct if_stmt>, box<struct while_stmt>>;
 
 struct block_stmt {
   std::vector<stmt> stmts;
 };
 
+// TODO: Make into an expression
 struct if_stmt {
+  expr                cond;
+  stmt                then;
+  std::optional<stmt> alt;
+};
+
+struct while_stmt {
   expr cond;
-  stmt then;
-  stmt alt;
+  stmt body;
 };
 
 } // namespace lox

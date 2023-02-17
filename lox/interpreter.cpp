@@ -91,6 +91,20 @@ auto interpreter::operator()(box<unary_expr> const& e) -> value {
   __builtin_unreachable();
 }
 
+auto interpreter::operator()(box<logical_expr> const& e) -> value {
+  value left = std::visit(*this, e->left);
+
+  // Short-circuiting
+  // Note that we return a 'truthy' value instead of a bool (lossy)
+  if (e->op.type == OR) {
+    if (is_truthy(left)) return left;
+  } else {
+    if (!is_truthy(left)) return left;
+  }
+
+  return std::visit(*this, e->right);
+}
+
 auto interpreter::operator()(box<binary_expr> const& e) -> value {
   // Here is an important semantic choice: we evaluate the LHS before the RHS.
   // Also, we evaluate both operands before checking their types are valid.
@@ -204,25 +218,37 @@ auto interpreter::operator()(box<conditional_expr> const& e) -> value {
   }
 }
 
-void interpreter::operator()(box<expression_stmt> const& s) {
-  std::visit(*this, s->ex);
+void interpreter::operator()(expression_stmt const& s) {
+  std::visit(*this, s.ex);
 }
 
-void interpreter::operator()(box<print_stmt> const& s) {
-  auto value = std::visit(*this, s->ex);
+void interpreter::operator()(print_stmt const& s) {
+  auto value = std::visit(*this, s.ex);
   fmt::print("{}\n", value);
 }
 
-void interpreter::operator()(box<variable_stmt> const& s) {
+void interpreter::operator()(variable_stmt const& s) {
   value value;
-  if (s->init) value = std::visit(*this, *s->init);
+  if (s.init) value = std::visit(*this, *s.init);
 
-  env.set(s->name.lexeme, value);
+  env.set(s.name.lexeme, value);
 }
 
-void interpreter::operator()(block_stmt const& s) const {
-  interpreter interpreter{environment(this->env)}; // create new scope
+void interpreter::operator()(block_stmt const& s) {
+  interpreter interpreter{environment(&env)}; // create new scope
   for (const auto& ss : s.stmts) { std::visit(interpreter, ss); }
+}
+
+void interpreter::operator()(box<if_stmt> const& s) {
+  if (is_truthy(std::visit(*this, s->cond))) {
+    std::visit(*this, s->then);
+  } else if (s->alt) {
+    std::visit(*this, *s->alt);
+  }
+}
+
+void interpreter::operator()(box<while_stmt> const& s) {
+  while (is_truthy(std::visit(*this, s->cond))) { std::visit(*this, s->body); }
 }
 
 // Use a reference because we want an in-out parameter.
@@ -230,8 +256,8 @@ void interpret(interpreter& interpreter, std::vector<stmt> const& stmts) {
   try {
     for (auto const& s : stmts) {
       if (std::holds_alternative<expression_stmt>(s)) {
-        auto expr  = std::get<expression_stmt>(s);
-        auto value = std::visit(interpreter, expr.ex);
+        auto  expr  = std::get<expression_stmt>(s);
+        value value = std::visit(interpreter, expr.ex);
         fmt::print("{}\n", to_string(value));
       } else {
         std::visit(interpreter, s);
