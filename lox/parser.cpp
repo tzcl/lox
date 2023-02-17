@@ -147,7 +147,6 @@ auto parser::logic_or() -> expr {
   return left_assoc<logical_expr>(&parser::logic_and, {OR});
 }
 
-// TODO: Should this call equality?
 auto parser::logic_and() -> expr {
   return left_assoc<logical_expr>(&parser::comma, {AND});
 }

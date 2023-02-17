@@ -112,6 +112,8 @@ auto interpreter::operator()(box<binary_expr> const& e) -> value {
   value right = std::visit(*this, e->right);
 
   switch (e->op.type) {
+  case COMMA:
+    return right;
   case BANG_EQUAL:
     return left != right;
   case EQUAL_EQUAL:
@@ -201,10 +203,8 @@ auto interpreter::operator()(box<binary_expr> const& e) -> value {
     return ops.left * ops.right;
   }
   default:
-    break;
+    throw errors::runtime_error(e->op, "Unhandled binary operator");
   }
-
-  __builtin_unreachable();
 }
 
 auto interpreter::operator()(box<conditional_expr> const& e) -> value {
