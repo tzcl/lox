@@ -28,6 +28,8 @@ struct interpreter {
   void operator()(block_stmt const& s);
   void operator()(box<if_stmt> const& s);
   void operator()(box<while_stmt> const& s);
+
+  [[noreturn]] void operator()(break_stmt const& s);
 };
 
 void interpret(interpreter& interpreter, std::vector<stmt> const& stmts);

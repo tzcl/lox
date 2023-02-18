@@ -56,6 +56,17 @@ static auto get_binary_ops(token token, value left, value right)
   }
 }
 
+struct break_exception final : public std::exception {
+  [[nodiscard]] auto what() const noexcept -> const char* override {
+    return "break: jumping out of loop";
+  }
+
+private:
+  virtual void anchor();
+};
+
+void break_exception::anchor() {}
+
 auto interpreter::operator()(literal_expr const& e) -> value { return e.value; }
 
 auto interpreter::operator()(variable_expr const& e) -> value {
@@ -239,6 +250,10 @@ void interpreter::operator()(block_stmt const& s) {
   for (const auto& ss : s.stmts) { std::visit(interpreter, ss); }
 }
 
+[[noreturn]] void interpreter::operator()(break_stmt const& /*s*/) {
+  throw break_exception();
+}
+
 void interpreter::operator()(box<if_stmt> const& s) {
   if (is_truthy(std::visit(*this, s->cond))) {
     std::visit(*this, s->then);
@@ -248,7 +263,13 @@ void interpreter::operator()(box<if_stmt> const& s) {
 }
 
 void interpreter::operator()(box<while_stmt> const& s) {
-  while (is_truthy(std::visit(*this, s->cond))) { std::visit(*this, s->body); }
+  try {
+    while (is_truthy(std::visit(*this, s->cond))) {
+      std::visit(*this, s->body);
+    }
+  } catch (break_exception&) {
+    // Break to end of loop
+  }
 }
 
 // Use a reference because we want an in-out parameter.

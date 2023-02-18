@@ -74,25 +74,23 @@ struct print_stmt {
   expr ex;
 };
 
-struct var_stmt {
-  token name;
-  expr  init;
-};
-
 struct variable_stmt {
   token               name;
   std::optional<expr> init;
 };
 
-using stmt =
-    std::variant<expression_stmt, print_stmt, variable_stmt, struct block_stmt,
-                 box<struct if_stmt>, box<struct while_stmt>>;
+struct break_stmt {
+  int loop_depth;
+};
+
+using stmt = std::variant<expression_stmt, print_stmt, variable_stmt,
+                          break_stmt, struct block_stmt, box<struct if_stmt>,
+                          box<struct while_stmt>>;
 
 struct block_stmt {
   std::vector<stmt> stmts;
 };
 
-// TODO: Make into an expression
 struct if_stmt {
   expr                cond;
   stmt                then;

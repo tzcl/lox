@@ -13,6 +13,7 @@ if (${APPLE})
   set(CMAKE_PREFIX_PATH /opt/homebrew)
   set(CMAKE_FIND_FRAMEWORK NEVER)
   set(CMAKE_FIND_APPBUNDLE NEVER)
+  add_compile_options("-fexperimental-library")
 endif()
 
 project(lox

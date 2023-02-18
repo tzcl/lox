@@ -24,6 +24,7 @@ private:
   auto for_statement() -> stmt;
   auto while_statement() -> stmt;
   auto block_statement() -> std::vector<stmt>;
+  auto break_statement() -> stmt;
   auto expression_statement() -> stmt;
   auto expression() -> expr;
   auto assignment() -> expr;
@@ -61,7 +62,8 @@ private:
 
   const std::vector<token> tokens_;
 
-  int curr_ = 0;
+  int curr_       = 0;
+  int loop_depth_ = 0;
 };
 
 } // namespace lox

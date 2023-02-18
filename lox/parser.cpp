@@ -45,14 +45,15 @@ auto parser::statement() -> stmt {
   if (match({FOR})) return for_statement();
   if (match({WHILE})) return while_statement();
   if (match({LEFT_BRACE})) return block_stmt{block_statement()};
+  if (match({BREAK})) return break_statement();
 
   return expression_statement();
 }
 
 auto parser::if_statement() -> stmt {
-  consume(LEFT_PAREN, "Expect '(' after 'if'");
+  consume(LEFT_PAREN, "expected '(' after 'if'");
   expr cond = expression();
-  consume(RIGHT_PAREN, "Expect ')' after if condition");
+  consume(RIGHT_PAREN, "expected ')' after if condition");
 
   stmt then = statement();
   if (match({ELSE})) {
@@ -62,6 +63,7 @@ auto parser::if_statement() -> stmt {
 
   return if_stmt{cond, then};
 }
+
 auto parser::print_statement() -> stmt {
   expr value = expression();
   consume(SEMICOLON, "Expect ';' after value");
@@ -85,26 +87,41 @@ auto parser::for_statement() -> stmt {
   if (!check(RIGHT_PAREN)) after = expression();
   consume(RIGHT_PAREN, "Expect ')' after for clauses");
 
-  stmt body = statement();
+  try {
+    ++loop_depth_;
 
-  // Rewrite for loop into equivalent while loop
-  if (after) { body = block_stmt{{body, expression_stmt{*after}}}; }
+    stmt body = statement();
 
-  if (!cond) cond = literal_expr{true};
-  body = while_stmt{*cond, body};
+    // Rewrite for loop into equivalent while loop
+    if (after) { body = block_stmt{{body, expression_stmt{*after}}}; }
 
-  if (init) body = block_stmt{{*init, body}};
+    if (!cond) cond = literal_expr{true};
+    body = while_stmt{*cond, body};
 
-  return body;
+    if (init) body = block_stmt{{*init, body}};
+
+    return body;
+  } catch (std::exception& e) {
+    // Catch and rethrow to ensure loop depth gets decremented
+    --loop_depth_;
+    throw e;
+  }
 }
 
 auto parser::while_statement() -> stmt {
   consume(LEFT_PAREN, "Expect '(' after 'while'");
   expr cond = expression();
   consume(RIGHT_PAREN, "Expect ')' after condition");
-  stmt body = statement();
 
-  return while_stmt{cond, body};
+  try {
+    ++loop_depth_;
+    stmt body = statement();
+
+    return while_stmt{cond, body};
+  } catch (std::exception& e) {
+    --loop_depth_;
+    throw e;
+  }
 }
 
 auto parser::block_statement() -> std::vector<stmt> {
@@ -113,6 +130,13 @@ auto parser::block_statement() -> std::vector<stmt> {
   consume(RIGHT_BRACE, "Expect '}' after block");
 
   return stmts;
+}
+
+auto parser::break_statement() -> stmt {
+  if (loop_depth_ == 0)
+    throw errors::parser_error(prev(), "'break' outside of loop");
+  consume(SEMICOLON, "Expect ';' after 'break'");
+  return break_stmt{loop_depth_};
 }
 
 auto parser::expression_statement() -> stmt {

@@ -82,6 +82,7 @@ private:
       {"true", token_type::TRUE},
       {"var", token_type::VAR},
       {"while", token_type::WHILE},
+      {"break", token_type::BREAK},
   }};
 };
 
