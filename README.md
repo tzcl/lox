@@ -4,8 +4,8 @@ An implementation of [Crafting Interpreters](https://craftinginterpreters.com/)'
 
 Extensions:
 
-- Properly nesting C-style `/*...*/` block comments
-- Added support for the [comma operator](https://en.wikipedia.org/wiki/Comma_operator) from C
+- Properly nesting C-style `/*...*/` block comments.
+- Added support for the [comma operator](https://en.wikipedia.org/wiki/Comma_operator) from C.
 - Added support for the ternarny operator.
 - Implemented break statements inside loops.
 
