@@ -17,10 +17,9 @@ namespace lox {
 // That said, it seems like this in possible in C++20 using
 // std::{construct, destroy}_at.
 //
-// Therefore, I can't make the members of these structs const. That has a
-// different meaning to what I'm intending. The problem is that you can't
-// reassign a struct with const members (since const tells the compiler that
-// that memory will never be overwritten).
+// Therefore, I can't make the members of these structs const. The problem 
+// is that you can't reassign a struct with const members (since const 
+// tells the compiler that that memory will never be overwritten).
 struct literal_expr {
   value value;
 };
