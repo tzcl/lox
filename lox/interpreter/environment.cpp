@@ -7,7 +7,7 @@
 
 namespace lox {
 
-void environment::assign(token name, value value) {
+void environment::assign(token name, literal value) {
   if (values_.contains(name.lexeme)) {
     values_[name.lexeme] = std::move(value);
     return;
@@ -22,7 +22,7 @@ void environment::assign(token name, value value) {
       name, fmt::format("Undefined variable '{}'", name.lexeme));
 }
 
-auto environment::get(token name) -> value {
+auto environment::get(token name) -> literal {
   if (values_.contains(name.lexeme)) return values_[name.lexeme];
 
   if (parent_ != nullptr) return parent_->get(name);

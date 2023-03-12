@@ -38,25 +38,25 @@ enum class token_type {
 
 // std::monostate here is a well-behaved empty alternative. Putting it first
 // allows for token_literal to be default-constructed.
-using value = std::variant<std::monostate, bool, double, std::string>;
+using literal = std::variant<std::monostate, bool, double, std::string>;
 
-auto print_value(value literal) -> std::string;
-auto to_string(value literal) -> std::string;
+auto print_value(literal literal) -> std::string;
+auto to_string(literal literal) -> std::string;
 
 struct token {
   token_type type;
   std::string lexeme;
   int line;
-  value literal;
+  literal literal;
   
   [[nodiscard]] auto str() const -> std::string;
 };
 
 } // namespace lox
 
-template <> struct fmt::formatter<lox::value> : formatter<std::string> {
+template <> struct fmt::formatter<lox::literal> : formatter<std::string> {
   template <typename FormatContext>
-  auto format(lox::value const& literal, FormatContext& ctx) const {
+  auto format(lox::literal const& literal, FormatContext& ctx) const {
     return formatter<std::string>::format(lox::print_value(literal), ctx);
   }
 };

@@ -153,6 +153,7 @@ void scanner::identifier() {
       return keywords.at(substr(start_, curr_));
     return token_type::IDENTIFIER;
   }();
+
   add_token(type);
 }
 

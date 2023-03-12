@@ -12,7 +12,14 @@ target_link_libraries(lox PUBLIC fmt::fmt)
 add_subdirectory(parser)
 add_subdirectory(interpreter)
 
-target_sources(lox
-  PUBLIC
-    errors.cpp
+target_sources(lox PUBLIC errors.cpp)
+
+target_compile_options(lox
+  PRIVATE
+    -Weverything  
+    -Wno-c++98-compat 
+    -Wno-padded 
+    -Wno-sign-conversion 
+    -Wno-missing-field-initializers 
+    -Wno-switch-enum
 )
