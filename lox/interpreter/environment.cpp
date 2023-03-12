@@ -1,4 +1,4 @@
-#include <lox/environment.hpp>
+#include <lox/interpreter/environment.hpp>
 
 #include <lox/errors.hpp>
 

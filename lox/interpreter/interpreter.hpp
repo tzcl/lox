@@ -1,8 +1,8 @@
 #pragma once
 
-#include <lox/environment.hpp>
 #include <lox/grammar.hpp>
-#include <lox/token.hpp>
+#include <lox/interpreter/environment.hpp>
+#include <lox/parser/token.hpp>
 
 #include <string>
 #include <variant>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lox/token.hpp>
+#include <lox/parser/token.hpp>
 
 #include <stdexcept>
 #include <string_view>

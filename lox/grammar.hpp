@@ -1,7 +1,7 @@
 #pragma once
 
 #include <lox/box.hpp>
-#include <lox/token.hpp>
+#include <lox/parser/token.hpp>
 
 #include <optional>
 #include <variant>

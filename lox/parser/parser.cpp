@@ -1,5 +1,5 @@
 #include <lox/errors.hpp>
-#include <lox/parser.hpp>
+#include <lox/parser/parser.hpp>
 
 #include <algorithm>
 #include <exception>
