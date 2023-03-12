@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lox/token.hpp>
+#include <lox/parser/token.hpp>
 
 #include <string>
 #include <unordered_map>

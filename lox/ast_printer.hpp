@@ -1,7 +1,7 @@
 #pragma once
 
 #include <lox/grammar.hpp>
-#include <lox/token.hpp>
+#include <lox/parser/token.hpp>
 
 #include <fmt/core.h>
 #include <fmt/ranges.h>

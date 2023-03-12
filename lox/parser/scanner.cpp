@@ -1,6 +1,5 @@
-#include <lox/scanner.hpp>
-
 #include <lox/errors.hpp>
+#include <lox/parser/scanner.hpp>
 
 #include <fmt/core.h>
 

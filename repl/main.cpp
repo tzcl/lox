@@ -1,10 +1,10 @@
 #include <lox/ast_printer.hpp>
 #include <lox/errors.hpp>
 #include <lox/grammar.hpp>
-#include <lox/interpreter.hpp>
-#include <lox/parser.hpp>
-#include <lox/scanner.hpp>
-#include <lox/token.hpp>
+#include <lox/interpreter/interpreter.hpp>
+#include <lox/parser/parser.hpp>
+#include <lox/parser/scanner.hpp>
+#include <lox/parser/token.hpp>
 
 #include <fmt/ranges.h>
 
@@ -38,6 +38,8 @@ static auto run(lox::interpreter& interpreter, std::string const& source)
   fmt::print("=== Output ===\n");
   lox::interpret(interpreter, stmts);
 
+  fmt::print("Done\n");
+
   return EX_OK;
 }
 
@@ -64,13 +66,14 @@ static auto run_file(std::string const& path) -> int {
   return EX_OK;
 }
 
-[[noreturn]] static void run_prompt() {
+static void run_prompt() {
   fmt::print("Running prompt\n");
   std::string      line;
   lox::interpreter interpreter{lox::environment(nullptr)};
   while (true) {
     fmt::print("> ");
     std::getline(std::cin, line);
+    if (!std::cin) break;
 
     run(interpreter, line);
 
