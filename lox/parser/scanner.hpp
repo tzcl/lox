@@ -38,10 +38,10 @@ private:
   }
   inline auto done() -> bool { return curr_ >= ssize(source_); }
 
-  inline void add_token(token_type type, value const& literal = value()) {
+  inline void add_token(token_type type, literal const& lit = literal{}) {
     // Clang 15 doesn't support parenthesised aggregate initialisation :(
     // tokens_.emplace_back(type, substr(start_, curr_), line_, literal);
-    tokens_.push_back(token{type, substr(start_, curr_), line_, literal});
+    tokens_.push_back(token{type, substr(start_, curr_), line_, lit});
   }
 
   inline auto substr(int start, int end) -> std::string {

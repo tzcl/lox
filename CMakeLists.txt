@@ -13,9 +13,7 @@ project(lox
   LANGUAGES CXX
 )
 
-add_compile_options("-Weverything"  "-Wno-c++98-compat" "-Wno-padded" 
-  "-Wno-sign-conversion" "-Wno-missing-field-initializers" "-Wno-switch-enum")
-
-add_subdirectory(deps SYSTEM)
+add_subdirectory(deps)
 add_subdirectory(lox)
 add_subdirectory(repl)
+add_subdirectory(tests)

@@ -13,14 +13,14 @@ namespace lox {
 struct interpreter {
   environment env;
 
-  auto operator()(literal_expr const& e) -> value;
-  auto operator()(variable_expr const& e) -> value;
-  auto operator()(box<group_expr> const& e) -> value;
-  auto operator()(box<assign_expr> const& e) -> value;
-  auto operator()(box<unary_expr> const& e) -> value;
-  auto operator()(box<logical_expr> const& e) -> value;
-  auto operator()(box<binary_expr> const& e) -> value;
-  auto operator()(box<conditional_expr> const& e) -> value;
+  auto operator()(literal_expr const& e) -> literal;
+  auto operator()(variable_expr const& e) -> literal;
+  auto operator()(box<group_expr> const& e) -> literal;
+  auto operator()(box<assign_expr> const& e) -> literal;
+  auto operator()(box<unary_expr> const& e) -> literal;
+  auto operator()(box<logical_expr> const& e) -> literal;
+  auto operator()(box<binary_expr> const& e) -> literal;
+  auto operator()(box<conditional_expr> const& e) -> literal;
 
   void operator()(expression_stmt const& s);
   void operator()(print_stmt const& s);

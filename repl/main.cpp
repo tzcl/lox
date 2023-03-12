@@ -32,6 +32,7 @@ static auto run(lox::interpreter& interpreter, std::string const& source)
   if (lox::errors::has_error()) return EX_DATAERR;
   if (lox::errors::has_runtime_error()) return EX_SOFTWARE;
 
+  // TODO: Remove debugging
   fmt::print("=== Printing AST ===\n{}\n",
              fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
 

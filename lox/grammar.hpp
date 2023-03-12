@@ -21,7 +21,7 @@ namespace lox {
 // is that you can't reassign a struct with const members (since const 
 // tells the compiler that that memory will never be overwritten).
 struct literal_expr {
-  value value;
+  literal value;
 };
 
 struct variable_expr {
