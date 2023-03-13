@@ -1,0 +1,7 @@
+2.5
+/* These comments should support nesting.
+// Normal comment
+/* Nested block comment */
+print "hello world";
+*/
+true;
