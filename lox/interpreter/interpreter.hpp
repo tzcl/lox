@@ -1,7 +1,8 @@
 #pragma once
 
-#include <lox/grammar.hpp>
+#include <lox/ast.hpp>
 #include <lox/interpreter/environment.hpp>
+#include <lox/interpreter/value.hpp>
 #include <lox/parser/token.hpp>
 
 #include <iostream>
@@ -15,14 +16,14 @@ struct interpreter {
   environment   env;
   std::ostream& output{std::cout};
 
-  auto operator()(literal_expr const& e) -> literal;
-  auto operator()(variable_expr const& e) -> literal;
-  auto operator()(box<group_expr> const& e) -> literal;
-  auto operator()(box<assign_expr> const& e) -> literal;
-  auto operator()(box<unary_expr> const& e) -> literal;
-  auto operator()(box<logical_expr> const& e) -> literal;
-  auto operator()(box<binary_expr> const& e) -> literal;
-  auto operator()(box<conditional_expr> const& e) -> literal;
+  auto operator()(literal_expr const& e) -> value;
+  auto operator()(variable_expr const& e) -> value;
+  auto operator()(box<group_expr> const& e) -> value;
+  auto operator()(box<assign_expr> const& e) -> value;
+  auto operator()(box<unary_expr> const& e) -> value;
+  auto operator()(box<logical_expr> const& e) -> value;
+  auto operator()(box<binary_expr> const& e) -> value;
+  auto operator()(box<conditional_expr> const& e) -> value;
 
   void operator()(expression_stmt const& s);
   void operator()(print_stmt const& s);

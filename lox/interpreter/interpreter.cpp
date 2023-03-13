@@ -14,23 +14,10 @@ const static double EPSILON = 1e-10;
 
 using enum token_type;
 
-// clang-format off
-template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; }; 
-// Still need deduction guide with Clang 15
-template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
-// clang-format on
-
-static auto is_truthy(literal value) -> bool {
-  return std::visit(overloaded{[](std::monostate&) { return false; },
-                               [](bool arg) { return arg; },
-                               [](auto&&) { return true; }},
-                    value);
-}
-
 template <typename T>
-static auto get_op(token op, literal value) -> T {
+static auto get_op(token op, value value) -> T {
   try {
-    return std::get<T>(value);
+    return std::get<T>(std::get<literal>(value));
   } catch (std::bad_variant_access&) {
     throw errors::runtime_error(std::move(op), "operand must be a number");
   }
@@ -67,30 +54,34 @@ private:
 
 void break_exception::anchor() {}
 
-auto interpreter::operator()(literal_expr const& e) -> literal {
-  return e.value;
-}
+auto interpreter::operator()(literal_expr const& e) -> value { return e.value; }
 
-auto interpreter::operator()(variable_expr const& e) -> literal {
-  literal value = env.get(e.name);
-  if (value.index() == 0)
+auto interpreter::operator()(variable_expr const& e) -> value {
+  value value = env.get(e.name);
+
+  try {
+    literal lit = std::get<literal>(value);
+    if (lit.index() == 0)
+      throw errors::runtime_error(e.name, "variable is uninitialised");
+  } catch (std::bad_variant_access&) {
     throw errors::runtime_error(e.name, "variable is uninitialised");
+  }
 
   return value;
 }
 
-auto interpreter::operator()(box<group_expr> const& e) -> literal {
+auto interpreter::operator()(box<group_expr> const& e) -> value {
   return std::visit(*this, e->ex);
 }
 
-auto interpreter::operator()(box<assign_expr> const& e) -> literal {
-  literal value = std::visit(*this, e->value);
+auto interpreter::operator()(box<assign_expr> const& e) -> value {
+  value value = std::visit(*this, e->value);
   env.assign(e->name, value);
   return value;
 }
 
-auto interpreter::operator()(box<unary_expr> const& e) -> literal {
-  literal right = std::visit(*this, e->right);
+auto interpreter::operator()(box<unary_expr> const& e) -> value {
+  value right = std::visit(*this, e->right);
 
   switch (e->op.type) {
   case BANG:
@@ -104,8 +95,8 @@ auto interpreter::operator()(box<unary_expr> const& e) -> literal {
   __builtin_unreachable();
 }
 
-auto interpreter::operator()(box<logical_expr> const& e) -> literal {
-  literal left = std::visit(*this, e->left);
+auto interpreter::operator()(box<logical_expr> const& e) -> value {
+  value left = std::visit(*this, e->left);
 
   // Short-circuiting
   // Note that we return a 'truthy' value instead of a bool (lossy)
@@ -118,11 +109,11 @@ auto interpreter::operator()(box<logical_expr> const& e) -> literal {
   return std::visit(*this, e->right);
 }
 
-auto interpreter::operator()(box<binary_expr> const& e) -> literal {
+auto interpreter::operator()(box<binary_expr> const& e) -> value {
   // Here is an important semantic choice: we evaluate the LHS before the RHS.
   // Also, we evaluate both operands before checking their types are valid.
-  literal left  = std::visit(*this, e->left);
-  literal right = std::visit(*this, e->right);
+  literal left  = get_literal(e->op, std::visit(*this, e->left));
+  literal right = get_literal(e->op, std::visit(*this, e->right));
 
   switch (e->op.type) {
   case COMMA:
@@ -220,8 +211,8 @@ auto interpreter::operator()(box<binary_expr> const& e) -> literal {
   }
 }
 
-auto interpreter::operator()(box<conditional_expr> const& e) -> literal {
-  literal cond = std::visit(*this, e->cond);
+auto interpreter::operator()(box<conditional_expr> const& e) -> value {
+  value cond = std::visit(*this, e->cond);
 
   // This implicitly converts any expression into a bool (may be unexpected)
   if (is_truthy(cond)) {
@@ -236,12 +227,12 @@ void interpreter::operator()(expression_stmt const& s) {
 }
 
 void interpreter::operator()(print_stmt const& s) {
-  auto value = std::visit(*this, s.ex);
-  output << fmt::format("{}\n", value);
+  value value = std::visit(*this, s.ex);
+  output << fmt::format("{}\n", to_string(value));
 }
 
 void interpreter::operator()(variable_stmt const& s) {
-  literal value;
+  value value;
   if (s.init) value = std::visit(*this, *s.init);
 
   env.set(s.name.lexeme, value);
@@ -279,8 +270,8 @@ void interpret(interpreter& interpreter, std::vector<stmt> const& stmts) {
   try {
     for (auto const& s : stmts) {
       if (std::holds_alternative<expression_stmt>(s)) {
-        auto    expr  = std::get<expression_stmt>(s);
-        literal value = std::visit(interpreter, expr.ex);
+        auto  expr  = std::get<expression_stmt>(s);
+        value value = std::visit(interpreter, expr.ex);
         interpreter.output << fmt::format("{}\n", to_string(value));
       } else {
         std::visit(interpreter, s);

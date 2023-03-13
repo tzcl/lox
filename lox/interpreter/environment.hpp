@@ -1,5 +1,6 @@
 #pragma once
 
+#include <lox/interpreter/value.hpp>
 #include <lox/parser/token.hpp>
 
 #include <string>
@@ -14,13 +15,11 @@ struct environment {
   // Use a raw pointer because we want a non-owning pointer that may be null.
   environment* parent_;
 
-  std::unordered_map<std::string, literal> values_;
+  std::unordered_map<std::string, value> values_;
 
-  void set(std::string name, literal value) {
-    values_[name] = std::move(value);
-  }
-  void assign(token name, literal value);
-  auto get(token name) -> literal;
+  void set(std::string name, value value) { values_[name] = std::move(value); }
+  void assign(token name, value value);
+  auto get(token name) -> value;
 };
 
 } // namespace lox

@@ -16,10 +16,6 @@ namespace lox {
 //
 // That said, it seems like this in possible in C++20 using
 // std::{construct, destroy}_at.
-//
-// Therefore, I can't make the members of these structs const. The problem 
-// is that you can't reassign a struct with const members (since const 
-// tells the compiler that that memory will never be overwritten).
 struct literal_expr {
   literal value;
 };
@@ -88,6 +84,12 @@ using stmt = std::variant<expression_stmt, print_stmt, variable_stmt,
 
 struct block_stmt {
   std::vector<stmt> stmts;
+};
+
+struct function_stmt {
+  token              name;
+  std::vector<token> params;
+  std::vector<stmt>  body;
 };
 
 struct if_stmt {

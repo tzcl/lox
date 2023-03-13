@@ -12,7 +12,10 @@ target_link_libraries(lox PUBLIC fmt::fmt)
 add_subdirectory(parser)
 add_subdirectory(interpreter)
 
-target_sources(lox PUBLIC errors.cpp)
+target_sources(lox 
+  PUBLIC 
+    errors.cpp
+)
 
 target_compile_options(lox
   PRIVATE
