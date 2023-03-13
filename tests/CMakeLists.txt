@@ -15,7 +15,7 @@ target_sources(tests
     main.cpp
     util.cpp
     scanner.test.cpp
-    interpreter.test.cpp
+    ast.test.cpp
 )
 
 target_link_libraries(tests PUBLIC doctest PRIVATE lox)

@@ -36,30 +36,28 @@ template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 // clang-format on
 
-auto print_value(literal literal) -> std::string {
+auto print_value(token_value value) -> std::string {
   using namespace std::string_literals;
   return std::visit(
       overloaded{[](std::monostate) { return "nil"s; },
-                 [](bool arg) { return arg ? "true"s : "false"s; },
                  [](double arg) { return fmt::format("{}", arg); },
                  [](std::string arg) { return fmt::format("\"{}\"", arg); }},
-      literal);
+      value);
 }
 
-auto to_string(literal literal) -> std::string {
+auto to_string(token_value value) -> std::string {
   using namespace std::string_literals;
   return std::visit(
       overloaded{[](std::monostate) { return ""s; },
-                 [](bool arg) { return arg ? "true"s : "false"s; },
                  [](double arg) { return fmt::format("{}", arg); },
                  [](std::string arg) { return fmt::format("\"{}\"", arg); }},
-      literal);
+      value);
 }
 
 auto token::str() const -> std::string {
-  return literal.index() == 0U
+  return value.index() == 0U
            ? fmt::format("{}", to_string(type))
-           : fmt::format("{} {} {}", to_string(type), lexeme, literal);
+           : fmt::format("{} {} {}", to_string(type), lexeme, value);
 }
 
 } // namespace lox

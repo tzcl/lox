@@ -1,8 +1,4 @@
-#include <lox/ast_printer.hpp>
 #include <lox/errors.hpp>
-#include <lox/grammar.hpp>
-#include <lox/interpreter/interpreter.hpp>
-#include <lox/parser/parser.hpp>
 #include <lox/parser/scanner.hpp>
 #include <lox/parser/token.hpp>
 
@@ -19,27 +15,19 @@
 #include <utility>
 #include <vector>
 
-static auto run(lox::interpreter& interpreter, std::string const& source)
-    -> int {
+static auto run(std::string const& source) -> int {
   lox::scanner scanner(source);
-  fmt::print("=== Printing tokens ===\n[{}]\n",
-             fmt::join(scanner.tokens(), ", "));
 
-  lox::parser            parser(scanner.tokens());
-  std::vector<lox::stmt> stmts = parser.parse();
+  // lox::parser parser(scanner.tokens());
+  // std::vector<lox::stmt> stmts = parser.parse();
 
   // Stop if there was an error
   if (lox::errors::has_error()) return EX_DATAERR;
   if (lox::errors::has_runtime_error()) return EX_SOFTWARE;
 
-  // TODO: Remove debugging
-  fmt::print("=== Printing AST ===\n{}\n",
-             fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
+  // lox::interpret(interpreter, stmts);
 
-  fmt::print("=== Output ===\n");
-  lox::interpret(interpreter, stmts);
-
-  fmt::print("Done\n");
+  fmt::print("{}\n", scanner.tokens());
 
   return EX_OK;
 }
@@ -57,9 +45,9 @@ static auto run_file(std::string const& path) -> int {
   const std::ostringstream ss;
   file >> ss.rdbuf();
 
-  lox::interpreter interpreter{lox::environment(nullptr)};
+  // lox::interpreter interpreter{lox::environment(nullptr)};
 
-  int err = run(interpreter, ss.str());
+  int err = run(ss.str());
   if (err > 0) return err;
 
   if (lox::errors::has_error()) EX_DATAERR;
@@ -69,14 +57,14 @@ static auto run_file(std::string const& path) -> int {
 
 static void run_prompt() {
   fmt::print("Running prompt\n");
-  std::string      line;
-  lox::interpreter interpreter{lox::environment(nullptr)};
+  std::string line;
+  // lox::interpreter interpreter{lox::environment(nullptr)};
   while (true) {
     fmt::print("> ");
     std::getline(std::cin, line);
     if (!std::cin) break;
 
-    run(interpreter, line);
+    run(line);
 
     lox::errors::reset();
   }

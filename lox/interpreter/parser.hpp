@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lox/grammar.hpp>
+#include <lox/ast/expr.hpp>
 #include <lox/parser/token.hpp>
 
 #include <string_view>
@@ -13,19 +13,19 @@ class parser {
 public:
   explicit parser(std::vector<token> tokens) : tokens_(std::move(tokens)) {}
 
-  auto parse() -> std::vector<stmt>;
+  auto parse() -> std::vector<expr>;
 
 private:
-  auto declaration() -> stmt;
-  auto var_declaration() -> stmt;
-  auto statement() -> stmt;
-  auto if_statement() -> stmt;
-  auto print_statement() -> stmt;
-  auto for_statement() -> stmt;
-  auto while_statement() -> stmt;
-  auto block_statement() -> std::vector<stmt>;
-  auto break_statement() -> stmt;
-  auto expression_statement() -> stmt;
+  // auto declaration() -> stmt;
+  // auto var_declaration() -> stmt;
+  // auto statement() -> stmt;
+  // auto if_statement() -> stmt;
+  // auto print_statement() -> stmt;
+  // auto for_statement() -> stmt;
+  // auto while_statement() -> stmt;
+  // auto block_statement() -> std::vector<stmt>;
+  // auto break_statement() -> stmt;
+  // auto expression_statement() -> stmt;
   auto expression() -> expr;
   auto assignment() -> expr;
   auto logic_or() -> expr;

@@ -8,7 +8,7 @@ void tokens_equal(const std::vector<lox::token>& want,
     CHECK(want[i].type == got[i].type);
     CHECK(want[i].lexeme == got[i].lexeme);
     CHECK(want[i].line == got[i].line);
-    CHECK(want[i].literal == got[i].literal);
+    CHECK(want[i].value == got[i].value);
   }
 }
 

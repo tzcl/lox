@@ -19,8 +19,8 @@ struct StringMaker<lox::token> {
 };
 
 template <>
-struct StringMaker<lox::literal> {
-  static auto convert(const lox::literal& value) -> String {
+struct StringMaker<lox::token_value> {
+  static auto convert(const lox::token_value& value) -> String {
     return fmt::format("{}", value).c_str();
   }
 };
