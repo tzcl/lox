@@ -13,7 +13,9 @@ add_custom_command(TARGET tests POST_BUILD
 target_sources(tests 
 	PUBLIC
     main.cpp
+    util.cpp
     scanner.test.cpp
+    interpreter.test.cpp
 )
 
 target_link_libraries(tests PUBLIC doctest PRIVATE lox)

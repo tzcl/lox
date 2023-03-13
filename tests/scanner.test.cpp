@@ -1,4 +1,5 @@
 #include <lox/parser/scanner.hpp>
+#include <tests/util.hpp>
 
 #include "doctest/doctest.h"
 #include <fmt/core.h>
@@ -9,57 +10,17 @@
 #include <string>
 #include <vector>
 
-namespace doctest {
-template <>
-struct StringMaker<lox::token> {
-  static auto convert(const lox::token& token) -> String {
-    return fmt::format("{}", token).c_str();
-  }
-};
-
-template <>
-struct StringMaker<lox::literal> {
-  static auto convert(const lox::literal& value) -> String {
-    return fmt::format("{}", value).c_str();
-  }
-};
-} // namespace doctest
-
-void tokens_equal(const std::vector<lox::token>& want,
-                  const std::vector<lox::token>& got) {
-  REQUIRE(std::size(want) == std::size(got));
-
-  for (int i = 0; i < std::ssize(want); ++i) {
-    CHECK(want[i].type == got[i].type);
-    CHECK(want[i].lexeme == got[i].lexeme);
-    CHECK(want[i].line == got[i].line);
-    CHECK(want[i].literal == got[i].literal);
-  }
-}
-
-auto read_file(const std::string& path) -> std::string {
-  std::ifstream file("testdata/scanner/" + path);
-  REQUIRE(file.good());
-
-  std::ostringstream ss;
-  file >> ss.rdbuf();
-
-  return ss.str();
-}
-
 using enum lox::token_type;
-
-using namespace std::string_literals;
 
 TEST_CASE("tokens") {
   std::string             file;
   std::vector<lox::token> want;
 
   SUBCASE("basic token") {
-    file = "tokens.lox";
+    file = "scanner/tokens.lox";
     want = {
         lox::token{PRINT, "print", 1},
-        lox::token{STRING, "\"Hello, world\"", 1, "Hello, world"s},
+        lox::token{STRING, "\"Hello, world\"", 1, "Hello, world"},
         lox::token{NUMBER, "42", 1, 42.},
         lox::token{NUMBER, "1.333", 1, 1.333},
         lox::token{TRUE, "true", 1}, // Don't store literal for booleans, can
@@ -69,7 +30,7 @@ TEST_CASE("tokens") {
     };
   }
   SUBCASE("identifiers") {
-    file = "identifiers.lox";
+    file = "scanner/identifiers.lox";
     want = {
         lox::token{IDENTIFIER, "andy", 1},
         lox::token{IDENTIFIER, "formless", 1},
@@ -86,7 +47,7 @@ TEST_CASE("tokens") {
     };
   }
   SUBCASE("keywords") {
-    file = "keywords.lox";
+    file = "scanner/keywords.lox";
     want = {
         lox::token{AND, "and", 1},     lox::token{CLASS, "class", 1},
         lox::token{ELSE, "else", 1},   lox::token{FALSE, "false", 1},
@@ -99,7 +60,7 @@ TEST_CASE("tokens") {
     };
   }
   SUBCASE("numbers") {
-    file = "numbers.lox";
+    file = "scanner/numbers.lox";
     want = {
         lox::token{NUMBER, "123", 1, 123.},
         lox::token{NUMBER, "123.456", 2, 123.456},
@@ -111,7 +72,7 @@ TEST_CASE("tokens") {
     };
   }
   SUBCASE("punctuation") {
-    file = "punctuation.lox";
+    file = "scanner/punctuation.lox";
     want = {
         lox::token{LEFT_PAREN, "(", 1},
         lox::token{RIGHT_PAREN, ")", 1},
@@ -135,7 +96,7 @@ TEST_CASE("tokens") {
     };
   }
   SUBCASE("whitespace") {
-    file = "whitespace.lox";
+    file = "scanner/whitespace.lox";
     want = {
         lox::token{IDENTIFIER, "space", 1},
         lox::token{IDENTIFIER, "tabs", 1},
@@ -158,7 +119,7 @@ TEST_CASE("comments") {
   std::vector<lox::token> want;
 
   SUBCASE("unicode") {
-    file = "unicode.lox";
+    file = "scanner/unicode.lox";
     want = {
         lox::token{PRINT, "print", 9},
         lox::token{STRING, "\"ok\"", 9, "ok"},
@@ -167,7 +128,7 @@ TEST_CASE("comments") {
     };
   }
   SUBCASE("block comments") {
-    file = "block.lox";
+    file = "scanner/block.lox";
     want = {
         lox::token{NUMBER, "2.5", 1, 2.5},
         // Comments get stripped out

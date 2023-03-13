@@ -4,6 +4,7 @@
 #include <lox/interpreter/environment.hpp>
 #include <lox/parser/token.hpp>
 
+#include <iostream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -11,7 +12,8 @@
 namespace lox {
 
 struct interpreter {
-  environment env;
+  environment   env;
+  std::ostream& output{std::cout};
 
   auto operator()(literal_expr const& e) -> literal;
   auto operator()(variable_expr const& e) -> literal;

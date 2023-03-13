@@ -237,7 +237,7 @@ void interpreter::operator()(expression_stmt const& s) {
 
 void interpreter::operator()(print_stmt const& s) {
   auto value = std::visit(*this, s.ex);
-  fmt::print("{}\n", value);
+  output << fmt::format("{}\n", value);
 }
 
 void interpreter::operator()(variable_stmt const& s) {
@@ -248,7 +248,7 @@ void interpreter::operator()(variable_stmt const& s) {
 }
 
 void interpreter::operator()(block_stmt const& s) {
-  interpreter interpreter{environment(&env)}; // create new scope
+  interpreter interpreter{environment(&env), output}; // create new scope
   for (const auto& ss : s.stmts) { std::visit(interpreter, ss); }
 }
 
@@ -281,7 +281,7 @@ void interpret(interpreter& interpreter, std::vector<stmt> const& stmts) {
       if (std::holds_alternative<expression_stmt>(s)) {
         auto    expr  = std::get<expression_stmt>(s);
         literal value = std::visit(interpreter, expr.ex);
-        fmt::print("{}\n", to_string(value));
+        interpreter.output << fmt::format("{}\n", to_string(value));
       } else {
         std::visit(interpreter, s);
       }
