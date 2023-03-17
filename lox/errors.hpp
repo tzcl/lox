@@ -1,44 +1,36 @@
 #pragma once
 
-#include <lox/parser/token.hpp>
+#include <lox/token/token.hpp>
 
 #include <stdexcept>
 #include <string_view>
 #include <utility>
 
-namespace lox::errors {
+namespace lox {
 
 struct parser_error final : public std::exception {
-  token       token;
-  std::string message;
+  parser_error(token token, std::string message);
 
-  parser_error(lox::token token_, std::string message_)
-      : token(std::move(token_)), message(std::move(message_)) {}
+  [[nodiscard]] auto what() const noexcept -> const char* override;
 
-  [[nodiscard]] auto what() const noexcept -> const char* override {
-    return message.c_str();
-  }
-
-private:
-  virtual void anchor();
+  token       token_;
+  std::string message_;
 };
 
 struct runtime_error final : public std::runtime_error {
-  token token;
+  runtime_error(token token, std::string const& message);
 
-  runtime_error(lox::token token_, std::string const& message)
-      : std::runtime_error(message), token(std::move(token_)) {}
-
-private:
-  virtual void anchor();
+  token token_;
 };
 
-auto has_error() -> bool;
-auto has_runtime_error() -> bool;
-void reset();
+// Really, this acts like a namespace.
+struct error {
+  static void report(int line, std::string_view message);
+  static void report_parser_error(const parser_error& err);
+  static void report_runtime_error(const runtime_error& err);
 
-void report(int line, std::string_view message);
-void report_parser_error(parser_error const& err);
-void report_runtime_error(runtime_error const& err);
+  static bool errored;
+  static bool runtime_errored;
+};
 
-} // namespace lox::errors
+} // namespace lox

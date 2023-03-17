@@ -1,10 +1,6 @@
-#include <lox/ast.hpp>
-#include <lox/ast_printer.hpp>
 #include <lox/errors.hpp>
-#include <lox/interpreter/interpreter.hpp>
-#include <lox/parser/parser.hpp>
-#include <lox/parser/scanner.hpp>
-#include <lox/parser/token.hpp>
+#include <lox/scanner/scanner.hpp>
+#include <lox/token/token.hpp>
 
 #include <fmt/ranges.h>
 
@@ -19,27 +15,14 @@
 #include <utility>
 #include <vector>
 
-static auto run(lox::interpreter& interpreter, std::string const& source)
-    -> int {
+static auto run(std::string const& source) -> int {
   lox::scanner scanner(source);
   fmt::print("=== Printing tokens ===\n[{}]\n",
              fmt::join(scanner.tokens(), ", "));
 
-  lox::parser            parser(scanner.tokens());
-  std::vector<lox::stmt> stmts = parser.parse();
-
   // Stop if there was an error
-  if (lox::errors::has_error()) return EX_DATAERR;
-  if (lox::errors::has_runtime_error()) return EX_SOFTWARE;
-
-  // TODO: Remove debugging
-  fmt::print("=== Printing AST ===\n{}\n",
-             fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
-
-  fmt::print("=== Output ===\n");
-  lox::interpret(interpreter, stmts);
-
-  fmt::print("Done\n");
+  if (lox::error::errored) return EX_DATAERR;
+  if (lox::error::runtime_errored) return EX_SOFTWARE;
 
   return EX_OK;
 }
@@ -57,28 +40,30 @@ static auto run_file(std::string const& path) -> int {
   const std::ostringstream ss;
   file >> ss.rdbuf();
 
-  lox::interpreter interpreter{lox::environment(nullptr)};
-
-  int err = run(interpreter, ss.str());
+  int err = run(ss.str());
   if (err > 0) return err;
 
-  if (lox::errors::has_error()) EX_DATAERR;
+  if (lox::error::errored) EX_DATAERR;
 
   return EX_OK;
 }
 
 static void run_prompt() {
   fmt::print("Running prompt\n");
-  std::string      line;
-  lox::interpreter interpreter{lox::environment(nullptr)};
+
+  std::string line;
   while (true) {
     fmt::print("> ");
-    std::getline(std::cin, line);
-    if (!std::cin) break;
 
-    run(interpreter, line);
+    if (std::getline(std::cin, line)) {
+      run(line);
 
-    lox::errors::reset();
+      lox::error::errored         = false;
+      lox::error::runtime_errored = false;
+    } else {
+      fmt::print("\n");
+      break;
+    }
   }
 }
 

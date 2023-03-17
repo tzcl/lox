@@ -1,5 +1,5 @@
 #include <lox/errors.hpp>
-#include <lox/parser/scanner.hpp>
+#include <lox/scanner/scanner.hpp>
 
 #include <fmt/core.h>
 
@@ -21,7 +21,7 @@ void scanner::skip_block_comment() {
   // Idea: keep track of the levels of nesting
   for (int depth = 1; depth > 0;) {
     if (done()) {
-      errors::report(line_, "unterminated block comment");
+      error::report(line_, "unterminated block comment");
       return;
     }
 
@@ -105,7 +105,7 @@ void scanner::scan() {
     } else if (is_alpha(c)) {
       identifier();
     } else {
-      errors::report(line_, fmt::format("unexpected character: {}", c));
+      error::report(line_, fmt::format("unexpected character: {}", c));
     }
     break;
   }
@@ -118,7 +118,7 @@ void scanner::string() {
   }
 
   if (done()) {
-    errors::report(
+    error::report(
         line_, fmt::format("unterminated string: {}", substr(start_, curr_)));
     return;
   }

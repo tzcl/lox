@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lox/parser/token.hpp>
+#include <lox/token/token.hpp>
 
 #include <string>
 #include <unordered_map>
@@ -48,6 +48,7 @@ private:
     return source_.substr(start, end - start);
   }
 
+  // TODO: Why are these inside the class?
   static inline auto is_digit(char c) -> bool { return c >= '0' && c <= '9'; }
   static inline auto is_alpha(char c) -> bool {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';

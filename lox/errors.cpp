@@ -1,42 +1,43 @@
 #include <lox/errors.hpp>
+#include <lox/token/token.hpp>
 
 #include <fmt/core.h>
 
-namespace lox::errors {
+#include <iostream>
 
-static bool has_error_;
-static bool has_runtime_error_;
+namespace lox {
 
-void parser_error::anchor() {}
-void runtime_error::anchor() {}
+parser_error::parser_error(token token, std::string message)
+    : token_(std::move(token)), message_(std::move(message)) {}
 
-auto has_error() -> bool { return has_error_; }
-
-auto has_runtime_error() -> bool { return has_runtime_error_; }
-
-void reset() {
-  has_error_         = false;
-  has_runtime_error_ = false;
+[[nodiscard]] auto parser_error::what() const noexcept -> const char* {
+  return message_.c_str();
 }
 
-void report(int line, std::string_view message) {
+runtime_error::runtime_error(token token, const std::string& message)
+    : std::runtime_error(message), token_(std::move(token)) {}
+
+bool error::errored         = false;
+bool error::runtime_errored = false;
+
+void error::report(int line, std::string_view message) {
   fmt::print("[line {}] Error: {}\n", line, message);
-  has_error_ = true;
+  errored = true;
 }
 
-void report_parser_error(parser_error const& err) {
-  if (err.token.type == token_type::EOF) {
-    report(err.token.line, fmt::format("at end: {}", err.message));
+void error::report_parser_error(const parser_error& err) {
+  if (err.token_.type == token_type::EOF) {
+    report(err.token_.line, fmt::format("at end: {}", err.message_));
   } else {
-    report(err.token.line,
-           fmt::format("at '{}': {}", err.token.lexeme, err.message));
+    report(err.token_.line,
+           fmt::format("at '{}': {}", err.token_.lexeme, err.message_));
   }
 }
 
-void report_runtime_error(runtime_error const& err) {
-  fmt::print("[line {}] Error: '{}' {}\n", err.token.line, err.token.lexeme,
+void error::report_runtime_error(const runtime_error& err) {
+  fmt::print("[line {}] Error: '{}' {}\n", err.token_.line, err.token_.lexeme,
              err.what());
-  has_runtime_error_ = true;
+  runtime_errored = true;
 }
 
-} // namespace lox::errors
+} // namespace lox

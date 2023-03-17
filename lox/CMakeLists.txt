@@ -9,11 +9,10 @@ target_include_directories(lox
 
 target_link_libraries(lox PUBLIC fmt::fmt)
 
-add_subdirectory(parser)
-add_subdirectory(interpreter)
-
 target_sources(lox 
   PUBLIC 
+    token/token.cpp
+    scanner/scanner.cpp
     errors.cpp
 )
 
@@ -25,4 +24,5 @@ target_compile_options(lox
     -Wno-sign-conversion 
     -Wno-missing-field-initializers 
     -Wno-switch-enum
+    -Wno-weak-vtables
 )

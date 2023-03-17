@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lox/parser/token.hpp>
+#include <lox/token/token.hpp>
 
 #include "doctest/doctest.h"
 #include <fmt/core.h>

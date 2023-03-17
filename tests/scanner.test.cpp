@@ -1,18 +1,15 @@
-#include <lox/parser/scanner.hpp>
+#include <lox/errors.hpp>
+#include <lox/scanner/scanner.hpp>
 #include <tests/util.hpp>
 
 #include "doctest/doctest.h"
-#include <fmt/core.h>
 
-#include <fstream>
-#include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 
 using enum lox::token_type;
 
-TEST_CASE("tokens") {
+TEST_CASE("check tokens") {
   std::string             file;
   std::vector<lox::token> want;
 
@@ -23,8 +20,9 @@ TEST_CASE("tokens") {
         lox::token{STRING, "\"Hello, world\"", 1, "Hello, world"},
         lox::token{NUMBER, "42", 1, 42.},
         lox::token{NUMBER, "1.333", 1, 1.333},
-        lox::token{TRUE, "true", 1}, // Don't store literal for booleans, can
-                                     // deduce value based on token type later.
+        // Don't store literal for booleans, can deduce value based on token
+        // type when building AST.
+        lox::token{TRUE, "true", 1},
         lox::token{SEMICOLON, ";", 2},
         lox::token{EOF, "", 3},
     };
@@ -105,19 +103,6 @@ TEST_CASE("tokens") {
         lox::token{EOF, "", 6},
     };
   }
-
-  const auto input = read_file(file);
-
-  lox::scanner scanner{input};
-  const auto   got = scanner.tokens();
-
-  ::tokens_equal(want, got);
-}
-
-TEST_CASE("comments") {
-  std::string             file;
-  std::vector<lox::token> want;
-
   SUBCASE("unicode") {
     file = "scanner/unicode.lox";
     want = {
@@ -143,5 +128,5 @@ TEST_CASE("comments") {
   lox::scanner scanner{input};
   const auto   got = scanner.tokens();
 
-  ::tokens_equal(want, got);
+  tokens_equal(want, got);
 }

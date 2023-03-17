@@ -1,4 +1,4 @@
-#include <lox/parser/token.hpp>
+#include <lox/token/token.hpp>
 
 #include <fmt/std.h>
 
