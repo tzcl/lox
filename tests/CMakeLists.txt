@@ -14,6 +14,7 @@ target_sources(tests
 	PUBLIC
     main.cpp
     util.cpp
+    token.test.cpp
     scanner.test.cpp
 )
 

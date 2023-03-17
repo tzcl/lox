@@ -7,6 +7,7 @@
 namespace lox {
 
 constexpr std::array token_type_names{
+    // Single-character tokens
     "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACE", "RIGHT_BRACE", "COMMA", "DOT",
     "MINUS", "PLUS", "SEMICOLON", "SLASH", "STAR", "QUESTION", "COLON",
 
@@ -36,18 +37,10 @@ template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 // clang-format on
 
-auto is_truthy(literal literal) -> bool {
-  return std::visit(overloaded{[](std::monostate&) { return false; },
-                               [](bool arg) { return arg; },
-                               [](auto&&) { return true; }},
-                    literal);
-}
-
 auto to_string(literal literal) -> std::string {
   using namespace std::string_literals;
   return std::visit(
       overloaded{[](std::monostate) { return "nil"s; },
-                 [](bool arg) { return arg ? "true"s : "false"s; },
                  [](double arg) { return fmt::format("{}", arg); },
                  [](std::string arg) { return fmt::format("\"{}\"", arg); }},
       literal);
@@ -56,7 +49,7 @@ auto to_string(literal literal) -> std::string {
 auto to_string(token token) -> std::string {
   return token.literal.index() == 0U
            ? fmt::format("{}", to_string(token.type))
-           : fmt::format("{} {} {}", to_string(token.type), token.lexeme,
+           : fmt::format("{} \"{}\" {}", to_string(token.type), token.lexeme,
                          token.literal);
 }
 

@@ -36,12 +36,11 @@ enum class token_type {
   NUM_TYPES
 };
 
-// std::monostate here is a well-behaved empty alternative. Putting it first
+// std::monostate is a well-behaved empty alternative. Putting it first
 // allows for token_literal to be default-constructed.
-using literal = std::variant<std::monostate, bool, double, std::string>;
+// TODO: Intern strings?
+using literal = std::variant<std::monostate, double, std::string>;
 
-auto is_truthy(literal literal) -> bool;
-auto print_value(literal literal) -> std::string;
 auto to_string(literal literal) -> std::string;
 
 struct token {
