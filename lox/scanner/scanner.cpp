@@ -5,43 +5,45 @@
 
 namespace lox {
 
-auto scanner::tokens() -> std::vector<token> {
+static auto get_token_type(std::string_view ident) -> token_type {
+  if (ident == "and") return token_type::AND;
+  if (ident == "class") return token_type::CLASS;
+  if (ident == "else") return token_type::ELSE;
+  if (ident == "false") return token_type::FALSE;
+  if (ident == "for") return token_type::FOR;
+  if (ident == "fun") return token_type::FUN;
+  if (ident == "if") return token_type::IF;
+  if (ident == "nil") return token_type::NIL;
+  if (ident == "or") return token_type::OR;
+  if (ident == "print") return token_type::PRINT;
+  if (ident == "return") return token_type::RETURN;
+  if (ident == "super") return token_type::SUPER;
+  if (ident == "this") return token_type::THIS;
+  if (ident == "true") return token_type::TRUE;
+  if (ident == "var") return token_type::VAR;
+  if (ident == "while") return token_type::WHILE;
+  if (ident == "break") return token_type::BREAK;
+
+  return token_type::IDENTIFIER;
+}
+
+// clang-format off
+static auto is_digit(char c) -> bool { return c >= '0' && c <= '9'; }
+static auto is_alpha(char c) -> bool { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'; }
+static auto is_alphanumeric(char c) -> bool { return is_alpha(c) || is_digit(c); }
+// clang-format on
+
+auto scanner::scan() -> std::vector<token> {
   while (!done()) {
     start_ = curr_;
-    scan();
+    scan_next();
   }
 
   tokens_.push_back(token{token_type::EOF, "", line_});
   return tokens_;
 }
 
-void scanner::skip_block_comment() {
-  // Naive implementation searches for the closing */ but that may overlap
-  // a nested comment!
-  // Idea: keep track of the levels of nesting
-  for (int depth = 1; depth > 0;) {
-    if (done()) {
-      error::report(line_, "unterminated block comment");
-      return;
-    }
-
-    if (match('/') && peek() == '*') {
-      next();
-      ++depth;
-      continue;
-    }
-
-    if (match('*') && peek() == '/') {
-      next();
-      --depth;
-      continue;
-    }
-
-    next();
-  }
-}
-
-void scanner::scan() {
+void scanner::scan_next() {
   char c = next();
   using enum lox::token_type; // C++20 addition!
   switch (c) {
@@ -80,7 +82,7 @@ void scanner::scan() {
       while (peek() != '\n' && !done()) next();
     } else if (match('*')) {
       // Find closing */
-      skip_block_comment();
+      block_comment();
     } else {
       add_token(SLASH);
     }
@@ -148,13 +150,39 @@ void scanner::number() {
 void scanner::identifier() {
   while (is_alphanumeric(peek())) next();
 
-  token_type type = [&]() {
-    if (keywords.contains(substr(start_, curr_)))
-      return keywords.at(substr(start_, curr_));
-    return token_type::IDENTIFIER;
-  }();
-
+  token_type type = get_token_type(substr(start_, curr_));
   add_token(type);
+}
+
+void scanner::block_comment() {
+  // A naive implementation searches for the closing */ but that may overlap
+  // a nested comment!
+  // Idea: keep track of the levels of nesting.
+  for (int depth = 1; depth > 0;) {
+    if (done()) {
+      error::report(line_, "unterminated block comment");
+      return;
+    }
+
+    if (match('/') && peek() == '*') {
+      next();
+      ++depth;
+      continue;
+    }
+
+    if (match('*') && peek() == '/') {
+      next();
+      --depth;
+      continue;
+    }
+
+    if (match('\n')) {
+      line_++;
+      continue;
+    }
+
+    next();
+  }
 }
 
 } // namespace lox

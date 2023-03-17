@@ -2,6 +2,7 @@
 
 #include <lox/token/token.hpp>
 
+#include <ostream>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
@@ -31,6 +32,8 @@ struct error {
 
   static bool errored;
   static bool runtime_errored;
+
+  static std::ostream& output;
 };
 
 } // namespace lox

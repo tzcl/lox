@@ -117,16 +117,16 @@ TEST_CASE("check tokens") {
     want = {
         lox::token{NUMBER, "2.5", 1, 2.5},
         // Comments get stripped out
-        lox::token{TRUE, "true", 3},
-        lox::token{SEMICOLON, ";", 3},
-        lox::token{EOF, "", 3},
+        lox::token{TRUE, "true", 7},
+        lox::token{SEMICOLON, ";", 7},
+        lox::token{EOF, "", 7},
     };
   }
 
   const auto input = read_file(file);
 
   lox::scanner scanner{input};
-  const auto   got = scanner.tokens();
+  const auto   got = scanner.scan();
 
   tokens_equal(want, got);
 }

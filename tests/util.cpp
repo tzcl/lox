@@ -5,6 +5,9 @@ void tokens_equal(const std::vector<lox::token>& want,
   REQUIRE(std::size(want) == std::size(got));
 
   for (int i = 0; i < std::ssize(want); ++i) {
+    CAPTURE(i);
+    CAPTURE(want[i]);
+    CAPTURE(got[i]);
     CHECK(want[i].type == got[i].type);
     CHECK(want[i].lexeme == got[i].lexeme);
     CHECK(want[i].line == got[i].line);

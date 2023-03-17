@@ -18,7 +18,7 @@
 static auto run(std::string const& source) -> int {
   lox::scanner scanner(source);
   fmt::print("=== Printing tokens ===\n[{}]\n",
-             fmt::join(scanner.tokens(), ", "));
+             fmt::join(scanner.scan(), ", "));
 
   // Stop if there was an error
   if (lox::error::errored) return EX_DATAERR;

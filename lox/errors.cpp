@@ -2,6 +2,7 @@
 #include <lox/token/token.hpp>
 
 #include <fmt/core.h>
+#include <fmt/ostream.h>
 
 #include <iostream>
 
@@ -20,8 +21,10 @@ runtime_error::runtime_error(token token, const std::string& message)
 bool error::errored         = false;
 bool error::runtime_errored = false;
 
+std::ostream& error::output = std::cout;
+
 void error::report(int line, std::string_view message) {
-  fmt::print("[line {}] Error: {}\n", line, message);
+  fmt::print(output, "[line {}] Error: {}\n", line, message);
   errored = true;
 }
 
