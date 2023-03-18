@@ -12,62 +12,18 @@ namespace lox {
 
 const static double EPSILON = 1e-10;
 
-using enum token_type;
-
-template <typename T>
-static auto get_op(token op, value value) -> T {
-  try {
-    return std::get<T>(std::get<literal>(value));
-  } catch (std::bad_variant_access&) {
-    throw errors::runtime_error(std::move(op), "operand must be a number");
-  }
-}
-
-template <typename T>
-struct binary_ops {
-  T left, right;
-};
-
-template <typename T>
-static auto check_binary_ops(literal left, literal right) -> bool {
-  return std::holds_alternative<T>(left) && std::holds_alternative<T>(right);
-}
-
-template <typename T>
-static auto get_binary_ops(token token, literal left, literal right)
-    -> binary_ops<T> {
-  try {
-    return {std::get<T>(left), std::get<T>(right)};
-  } catch (std::bad_variant_access&) {
-    throw errors::runtime_error(std::move(token), "operands must be numbers");
-  }
-}
-
 struct break_exception final : public std::exception {
   [[nodiscard]] auto what() const noexcept -> const char* override {
     return "break: jumping out of loop";
   }
-
-private:
-  virtual void anchor();
 };
-
-void break_exception::anchor() {}
 
 auto interpreter::operator()(literal_expr const& e) -> value { return e.value; }
 
 auto interpreter::operator()(variable_expr const& e) -> value {
-  value value = env.get(e.name);
-
-  try {
-    literal lit = std::get<literal>(value);
-    if (lit.index() == 0)
-      throw errors::runtime_error(e.name, "variable is uninitialised");
-  } catch (std::bad_variant_access&) {
-    throw errors::runtime_error(e.name, "variable is uninitialised");
-  }
-
-  return value;
+  // value value = env.get(e.name);
+  // return value;
+  return primitive{"variable_expr"};
 }
 
 auto interpreter::operator()(box<group_expr> const& e) -> value {
@@ -75,19 +31,20 @@ auto interpreter::operator()(box<group_expr> const& e) -> value {
 }
 
 auto interpreter::operator()(box<assign_expr> const& e) -> value {
-  value value = std::visit(*this, e->value);
-  env.assign(e->name, value);
-  return value;
+  // value value = std::visit(*this, e->value);
+  // env.assign(e->name, value);
+  // return value;
+  return primitive{"assign_expr"};
 }
 
 auto interpreter::operator()(box<unary_expr> const& e) -> value {
   value right = std::visit(*this, e->right);
 
   switch (e->op.type) {
-  case BANG:
-    return !is_truthy(right);
-  case MINUS:
-    return -get_op<double>(e->op, right);
+  case token_type::BANG:
+    return !right.is_truthy();
+  case token_type::MINUS:
+    return -right.get_double(e->op);
   default:
     break;
   }
@@ -100,29 +57,29 @@ auto interpreter::operator()(box<logical_expr> const& e) -> value {
 
   // Short-circuiting
   // Note that we return a 'truthy' value instead of a bool (lossy)
-  if (e->op.type == OR) {
-    if (is_truthy(left)) return left;
+  if (e->op.type == token_type::OR) {
+    if (left.is_truthy()) return left;
   } else {
-    if (!is_truthy(left)) return left;
+    if (!left.is_truthy()) return left;
   }
 
   return std::visit(*this, e->right);
 }
 
 auto interpreter::operator()(box<binary_expr> const& e) -> value {
-  // Here is an important semantic choice: we evaluate the LHS before the RHS.
+  // Note, we evaluate the LHS before the RHS.
   // Also, we evaluate both operands before checking their types are valid.
-  literal left  = get_literal(e->op, std::visit(*this, e->left));
-  literal right = get_literal(e->op, std::visit(*this, e->right));
+  value left  = std::visit(*this, e->left);
+  value right = std::visit(*this, e->right);
 
   switch (e->op.type) {
-  case COMMA:
+  case token_type::COMMA:
     return right;
-  case BANG_EQUAL:
+  case token_type::BANG_EQUAL:
     return left != right;
-  case EQUAL_EQUAL:
+  case token_type::EQUAL_EQUAL:
     return left == right;
-  case GREATER:
+  case token_type::GREATER:
     if (check_binary_ops<double>(left, right)) {
       auto ops = get_binary_ops<double>(e->op, left, right);
       return ops.left > ops.right;
@@ -134,7 +91,7 @@ auto interpreter::operator()(box<binary_expr> const& e) -> value {
 
     throw errors::runtime_error(e->op,
                                 "operands must be two numbers or two strings");
-  case GREATER_EQUAL:
+  case token_type::GREATER_EQUAL:
     if (check_binary_ops<double>(left, right)) {
       auto ops = get_binary_ops<double>(e->op, left, right);
       return ops.left >= ops.right;
@@ -147,7 +104,7 @@ auto interpreter::operator()(box<binary_expr> const& e) -> value {
     throw errors::runtime_error(e->op,
                                 "operands must be two numbers or two strings");
 
-  case LESS:
+  case token_type::LESS:
     if (check_binary_ops<double>(left, right)) {
       auto ops = get_binary_ops<double>(e->op, left, right);
       return ops.left < ops.right;
@@ -159,7 +116,7 @@ auto interpreter::operator()(box<binary_expr> const& e) -> value {
 
     throw errors::runtime_error(e->op,
                                 "operands must be two numbers or two strings");
-  case LESS_EQUAL:
+  case token_type::LESS_EQUAL:
     if (check_binary_ops<double>(left, right)) {
       auto ops = get_binary_ops<double>(e->op, left, right);
       return ops.left <= ops.right;
@@ -171,11 +128,11 @@ auto interpreter::operator()(box<binary_expr> const& e) -> value {
 
     throw errors::runtime_error(e->op,
                                 "operands must be two numbers or two strings");
-  case MINUS: {
+  case token_type::MINUS: {
     auto ops = get_binary_ops<double>(e->op, left, right);
     return ops.left - ops.right;
   }
-  case PLUS:
+  case token_type::PLUS:
     if (check_binary_ops<double>(left, right)) {
       auto ops = get_binary_ops<double>(e->op, left, right);
       return ops.left + ops.right;
@@ -196,13 +153,13 @@ auto interpreter::operator()(box<binary_expr> const& e) -> value {
     }
 
     throw errors::runtime_error(e->op, "operands are incompatible");
-  case SLASH: {
+  case token_type::SLASH: {
     auto ops = get_binary_ops<double>(e->op, left, right);
     if (std::abs(ops.right) < EPSILON)
       throw errors::runtime_error(e->op, "division by zero");
     return ops.left / ops.right;
   }
-  case STAR: {
+  case token_type::STAR: {
     auto ops = get_binary_ops<double>(e->op, left, right);
     return ops.left * ops.right;
   }

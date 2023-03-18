@@ -1,37 +1,99 @@
 #pragma once
 
-#include <lox/ast.hpp>
-#include <lox/box.hpp>
+#include <lox/errors.hpp>
+#include <lox/token/token.hpp>
 
+#include <memory>
+#include <utility>
 #include <variant>
-#include <vector>
 
 namespace lox {
 
-using value = std::variant<literal, struct callable>;
+class value final {
+private:
+  class base {
+  public:
+    virtual ~base() = default;
 
-auto to_string(value value) -> std::string;
-auto is_truthy(value value) -> bool;
+    [[nodiscard]] virtual auto clone() const -> std::unique_ptr<base> = 0;
 
-auto get_literal(token token, value value) -> literal;
+    [[nodiscard]] virtual auto is_truthy() const -> bool = 0;
 
-template <typename T>
-concept visitor =
-    requires(T& t, const std::vector<stmt>& stmts) { interpret(t, stmts); };
+    [[nodiscard]] virtual auto get_double(token op) const -> double = 0;
 
-struct callable {
-  function_stmt decl;
+    friend constexpr auto operator==(const base&, const base&)
+        -> bool = default;
+  };
 
-  void call(visitor auto visitor, const std::vector<value>& values);
-  auto arity() -> int;
+  template <typename T>
+  class model final : public base {
+  public:
+    model(T obj) : obj_(std::move(obj)) {}
+
+    [[nodiscard]] auto clone() const -> std::unique_ptr<base> override {
+      return std::make_unique<model<T>>(obj_);
+    }
+
+    [[nodiscard]] auto is_truthy() const -> bool override {
+      return obj_.is_truthy();
+    }
+
+    [[nodiscard]] auto get_double(token op) const -> double override {
+      return obj_.get_double(std::move(op));
+    }
+
+  private:
+    T obj_;
+  };
+
+  std::unique_ptr<base> ptr_;
+
+public:
+  template <typename T>
+  value(T obj) : ptr_(std::make_unique<model<T>>(std::move(obj))) {}
+
+  value(const value& other) : ptr_(other.ptr_->clone()) {}
+  auto operator=(const value& other) -> value& {
+    value tmp(other);
+    std::swap(ptr_, tmp.ptr_);
+    return *this;
+  }
+
+  // Leaving the move constructor undefined means that the copy constructor
+  // will be used as a fallback. This means that we avoid the moved-from state.
+  // value(value&& other);
+  auto operator=(value&& other) noexcept -> value& {
+    ptr_.swap(other.ptr_);
+    return *this;
+  }
+
+  [[nodiscard]] auto is_truthy() const -> bool { return ptr_->is_truthy(); }
+
+  [[nodiscard]] auto get_double(token op) const -> double {
+    return ptr_->get_double(std::move(op));
+  }
+
+  friend auto operator==(const value&, const value&) -> bool  = default;
+  friend auto operator<=>(const value&, const value&) -> bool = default;
+};
+
+struct primitive {
+  literal lit;
+
+  [[nodiscard]] auto is_truthy() const -> bool { return lit.index() != 0; }
+
+  [[nodiscard]] auto get_double(token op) const -> double {
+    try {
+      return std::get<double>(lit);
+    } catch (std::bad_variant_access&) {
+      throw runtime_error(std::move(op), "operand must be a number");
+    }
+  }
+
+  friend constexpr auto operator==(const primitive& a, const primitive& b)
+      -> bool {
+    return true;
+  }
 };
 
 } // namespace lox
-
-template <>
-struct fmt::formatter<lox::value> : formatter<std::string> {
-  template <typename FormatContext>
-  auto format(lox::value const& value, FormatContext& ctx) const {
-    return formatter<std::string>::format(lox::to_string(value), ctx);
-  }
-};
