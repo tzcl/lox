@@ -130,3 +130,35 @@ TEST_CASE("check tokens") {
 
   tokens_equal(want, got);
 }
+
+TEST_CASE("errors") {
+  std::string file;
+  std::string err;
+
+  SUBCASE("unterminated string") {
+    file = "scanner/unterminated_string.lox";
+    err  = "[line 1] Error: unterminated string: \"This string has no close "
+           "quote\n";
+  }
+  SUBCASE("unterminated comment") {
+    file = "scanner/unterminated_comment.lox";
+    err  = "[line 1] Error: unterminated block comment\n";
+  }
+  SUBCASE("unexpected character") {
+    file = "scanner/invalid_char.lox";
+    err  = "[line 2] Error: unexpected character: \\\n";
+  }
+
+  const auto input = read_file(file);
+
+  std::ostringstream buffer;
+  auto*              prev = lox::error::output.rdbuf(buffer.rdbuf());
+
+  lox::scanner scanner(input);
+  const auto   _ = scanner.scan();
+
+  lox::error::output.rdbuf(prev);
+
+  CAPTURE(buffer.str());
+  REQUIRE(err == buffer.str());
+}
