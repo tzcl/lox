@@ -3,97 +3,42 @@
 #include <lox/errors.hpp>
 #include <lox/token/token.hpp>
 
-#include <memory>
-#include <utility>
+#include <string>
 #include <variant>
 
 namespace lox {
 
-class value final {
-private:
-  class base {
-  public:
-    virtual ~base() = default;
-
-    [[nodiscard]] virtual auto clone() const -> std::unique_ptr<base> = 0;
-
-    [[nodiscard]] virtual auto is_truthy() const -> bool = 0;
-
-    [[nodiscard]] virtual auto get_double(token op) const -> double = 0;
-
-    friend constexpr auto operator==(const base&, const base&)
-        -> bool = default;
-  };
-
-  template <typename T>
-  class model final : public base {
-  public:
-    model(T obj) : obj_(std::move(obj)) {}
-
-    [[nodiscard]] auto clone() const -> std::unique_ptr<base> override {
-      return std::make_unique<model<T>>(obj_);
-    }
-
-    [[nodiscard]] auto is_truthy() const -> bool override {
-      return obj_.is_truthy();
-    }
-
-    [[nodiscard]] auto get_double(token op) const -> double override {
-      return obj_.get_double(std::move(op));
-    }
-
-  private:
-    T obj_;
-  };
-
-  std::unique_ptr<base> ptr_;
-
-public:
-  template <typename T>
-  value(T obj) : ptr_(std::make_unique<model<T>>(std::move(obj))) {}
-
-  value(const value& other) : ptr_(other.ptr_->clone()) {}
-  auto operator=(const value& other) -> value& {
-    value tmp(other);
-    std::swap(ptr_, tmp.ptr_);
-    return *this;
-  }
-
-  // Leaving the move constructor undefined means that the copy constructor
-  // will be used as a fallback. This means that we avoid the moved-from state.
-  // value(value&& other);
-  auto operator=(value&& other) noexcept -> value& {
-    ptr_.swap(other.ptr_);
-    return *this;
-  }
-
-  [[nodiscard]] auto is_truthy() const -> bool { return ptr_->is_truthy(); }
-
-  [[nodiscard]] auto get_double(token op) const -> double {
-    return ptr_->get_double(std::move(op));
-  }
-
-  friend auto operator==(const value&, const value&) -> bool  = default;
-  friend auto operator<=>(const value&, const value&) -> bool = default;
+struct callable {
+  friend auto operator==(const callable&, const callable&) -> bool = default;
 };
 
-struct primitive {
-  literal lit;
+// A value is either a literal or a callable. Instead of nesting variants,
+// literal has been flattened out here.
+using value = std::variant<std::monostate, bool, double, std::string, callable>;
 
-  [[nodiscard]] auto is_truthy() const -> bool { return lit.index() != 0; }
+using number_or_string = std::variant<double, std::string>;
 
-  [[nodiscard]] auto get_double(token op) const -> double {
-    try {
-      return std::get<double>(lit);
-    } catch (std::bad_variant_access&) {
-      throw runtime_error(std::move(op), "operand must be a number");
-    }
-  }
+// *** Operations ***
 
-  friend constexpr auto operator==(const primitive& a, const primitive& b)
-      -> bool {
-    return true;
-  }
-};
+auto to_string(value value) -> std::string;
+auto to_value(literal literal) -> value;
+auto to_value(number_or_string result) -> value;
+
+// Unary operations
+auto is_truthy(value value) -> bool;
+auto negate(token token, value value) -> double;
+
+// Binary operations
+// - Comparison operations
+auto less_than(token token, value left, value right) -> bool;
+auto greater_than(token token, value left, value right) -> bool;
+auto less_equal(token token, value left, value right) -> bool;
+auto greater_equal(token token, value left, value right) -> bool;
+
+// - Maths operations
+auto plus(token token, value left, value right) -> number_or_string;
+auto minus(token token, value left, value right) -> double;
+auto multiply(token token, value left, value right) -> number_or_string;
+auto divide(token token, value left, value right) -> double;
 
 } // namespace lox

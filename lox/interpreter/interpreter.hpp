@@ -15,21 +15,21 @@ struct interpreter {
   // environment   env{};
   std::ostream& output = std::cout;
 
-  auto operator()(literal_expr const& e) -> value;
-  auto operator()(variable_expr const& e) -> value;
-  auto operator()(box<group_expr> const& e) -> value;
-  auto operator()(box<assign_expr> const& e) -> value;
-  auto operator()(box<unary_expr> const& e) -> value;
-  auto operator()(box<logical_expr> const& e) -> value;
-  auto operator()(box<binary_expr> const& e) -> value;
-  auto operator()(box<conditional_expr> const& e) -> value;
+  auto operator()(const literal_expr& e) -> value;
+  auto operator()(const variable_expr& e) -> value;
+  auto operator()(const box<group_expr>& e) -> value;
+  auto operator()(const box<assign_expr>& e) -> value;
+  auto operator()(const box<unary_expr>& e) -> value;
+  auto operator()(const box<logical_expr>& e) -> value;
+  auto operator()(const box<binary_expr>& e) -> value;
+  auto operator()(const box<conditional_expr>& e) -> value;
 
-  void operator()(expression_stmt const& s);
-  void operator()(print_stmt const& s);
-  void operator()(variable_stmt const& s);
-  void operator()(block_stmt const& s);
-  void operator()(box<if_stmt> const& s);
-  void operator()(box<while_stmt> const& s);
+  void operator()(const expression_stmt& s);
+  void operator()(const print_stmt& s);
+  void operator()(const variable_stmt& s);
+  void operator()(const block_stmt& s);
+  void operator()(const box<if_stmt>& s);
+  void operator()(const box<while_stmt>& s);
 
   [[noreturn]] void operator()(break_stmt const& s);
 };

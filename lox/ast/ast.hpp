@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lox/ast/box.hpp>
+#include <lox/box.hpp>
 #include <lox/token/token.hpp>
 
 #include <optional>
@@ -15,7 +15,7 @@ namespace lox {
 // https://stackoverflow.com/questions/58414966/move-construction-and-assignment-of-class-with-constant-member
 
 struct literal_expr {
-  literal value;
+  literal literal;
 };
 
 struct variable_expr {

@@ -1,5 +1,6 @@
 #include <lox/ast/ast_printer.hpp>
 #include <lox/errors.hpp>
+#include <lox/interpreter/interpreter.hpp>
 #include <lox/parser/parser.hpp>
 #include <lox/scanner/scanner.hpp>
 #include <lox/token/token.hpp>
@@ -30,6 +31,10 @@ static auto run(std::string const& source) -> int {
   const auto  stmts = parser.parse();
   fmt::print("=== Printing AST ===\n{}\n",
              fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
+
+  fmt::print("=== Evaluating AST ===\n");
+  lox::interpreter interpreter{};
+  lox::interpret(interpreter, stmts);
 
   return EX_OK;
 }

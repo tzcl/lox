@@ -15,6 +15,8 @@ target_sources(lox
     token/token.cpp
     scanner/scanner.cpp
     parser/parser.cpp
+    interpreter/value.cpp
+    interpreter/interpreter.cpp
 )
 
 target_compile_options(lox

@@ -41,6 +41,7 @@ auto to_string(literal literal) -> std::string {
   using namespace std::string_literals;
   return std::visit(
       overloaded{[](std::monostate) { return "nil"s; },
+                 [](bool arg) { return arg ? "true"s : "false"s; },
                  [](double arg) { return fmt::format("{}", arg); },
                  [](std::string arg) { return fmt::format("\"{}\"", arg); }},
       literal);

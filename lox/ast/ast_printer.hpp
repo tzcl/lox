@@ -29,7 +29,7 @@ struct ast_printer {
   int indent = 0;
 
   auto operator()(literal_expr const& e) -> std::string {
-    return fmt::format("{}", e.value);
+    return fmt::format("{}", e.literal);
   }
   auto operator()(variable_expr const& e) -> std::string {
     return fmt::format("{}", e.name.lexeme);
