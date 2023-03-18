@@ -17,6 +17,7 @@ target_sources(lox
     parser/parser.cpp
     interpreter/value.cpp
     interpreter/interpreter.cpp
+    interpreter/environment.cpp
 )
 
 target_compile_options(lox

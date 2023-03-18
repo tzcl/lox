@@ -1,6 +1,5 @@
-#include <lox/interpreter/environment.hpp>
-
 #include <lox/errors.hpp>
+#include <lox/interpreter/environment.hpp>
 
 #include <fmt/ranges.h>
 #include <utility>
@@ -18,8 +17,8 @@ void environment::assign(token name, value value) {
     return;
   }
 
-  throw errors::runtime_error(
-      name, fmt::format("Undefined variable '{}'", name.lexeme));
+  throw runtime_error(name,
+                      fmt::format("undefined variable '{}'", name.lexeme));
 }
 
 auto environment::get(token name) -> value {
@@ -27,8 +26,8 @@ auto environment::get(token name) -> value {
 
   if (parent_ != nullptr) return parent_->get(name);
 
-  throw errors::runtime_error(
-      name, fmt::format("Undefined variable '{}'", name.lexeme));
+  throw runtime_error(name,
+                      fmt::format("undefined variable '{}'", name.lexeme));
 }
 
 } // namespace lox

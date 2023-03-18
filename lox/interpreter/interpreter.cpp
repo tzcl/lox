@@ -21,9 +21,8 @@ auto interpreter::operator()(const literal_expr& e) -> value {
 }
 
 auto interpreter::operator()(const variable_expr& e) -> value {
-  // value value = env.get(e.name);
-  // return value;
-  return "variable_expr";
+  value value = env.get(e.name);
+  return value;
 }
 
 auto interpreter::operator()(const box<group_expr>& e) -> value {
@@ -31,10 +30,9 @@ auto interpreter::operator()(const box<group_expr>& e) -> value {
 }
 
 auto interpreter::operator()(const box<assign_expr>& e) -> value {
-  // value value = std::visit(*this, e->value);
-  // env.assign(e->name, value);
-  // return value;
-  return "assign_expr";
+  value value = std::visit(*this, e->value);
+  env.assign(e->name, value);
+  return value;
 }
 
 auto interpreter::operator()(const box<unary_expr>& e) -> value {
@@ -124,12 +122,12 @@ void interpreter::operator()(const variable_stmt& s) {
   value value;
   if (s.init) value = std::visit(*this, *s.init);
 
-  // env.set(s.name.lexeme, value);
+  env.set(s.name.lexeme, value);
 }
 
 void interpreter::operator()(const block_stmt& s) {
-  // interpreter interpreter{environment(&env), output}; // create new scope
-  for (const auto& ss : s.stmts) { std::visit(*this, ss); }
+  interpreter interpreter{environment(&env), output}; // create new scope
+  for (const auto& ss : s.stmts) { std::visit(interpreter, ss); }
 }
 
 [[noreturn]] void interpreter::operator()(const break_stmt& /*s*/) {

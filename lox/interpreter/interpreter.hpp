@@ -1,6 +1,7 @@
 #pragma once
 
 #include <lox/ast/ast.hpp>
+#include <lox/interpreter/environment.hpp>
 #include <lox/interpreter/value.hpp>
 #include <lox/token/token.hpp>
 
@@ -12,7 +13,7 @@
 namespace lox {
 
 struct interpreter {
-  // environment   env{};
+  environment   env{nullptr};
   std::ostream& output = std::cout;
 
   auto operator()(const literal_expr& e) -> value;
