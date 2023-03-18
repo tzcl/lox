@@ -150,12 +150,10 @@ TEST_CASE("errors") {
   const auto input = read_file(file);
 
   std::ostringstream buffer;
-  auto*              prev = lox::error::output.rdbuf(buffer.rdbuf());
+  lox::errors::output = &buffer;
 
   lox::scanner scanner(input);
   const auto   _ = scanner.scan();
-
-  lox::error::output.rdbuf(prev);
 
   CAPTURE(buffer.str());
   REQUIRE(err == buffer.str());

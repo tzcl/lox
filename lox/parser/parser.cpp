@@ -22,7 +22,7 @@ auto parser::declaration() -> stmt {
   try {
     if (match({VAR})) return var_declaration();
     return statement();
-  } catch (errors::parser_error& err) {
+  } catch (parser_error& err) {
     errors::report_parser_error(err);
     synchronise();
     return expression_stmt{};
@@ -133,8 +133,7 @@ auto parser::block_statement() -> std::vector<stmt> {
 }
 
 auto parser::break_statement() -> stmt {
-  if (loop_depth_ == 0)
-    throw errors::parser_error(prev(), "'break' outside of loop");
+  if (loop_depth_ == 0) throw parser_error(prev(), "'break' outside of loop");
   consume(SEMICOLON, "Expect ';' after 'break'");
   return break_stmt{loop_depth_};
 }
@@ -243,38 +242,38 @@ auto parser::primary() -> expr {
   // Check for binary operators missing their first expression
   missing_binary_op();
 
-  throw errors::parser_error(peek(), "expected expression");
+  throw parser_error(peek(), "expected expression");
 }
 
 void parser::missing_binary_op() {
   if (match({COMMA})) {
     token op = prev();
     conditional();
-    throw errors::parser_error(op, "missing left-hand operand");
+    throw parser_error(op, "missing left-hand operand");
   }
 
   if (match({BANG_EQUAL, EQUAL_EQUAL})) {
     token op = prev();
     equality();
-    throw errors::parser_error(op, "missing left-hand operand");
+    throw parser_error(op, "missing left-hand operand");
   }
 
   if (match({GREATER, GREATER_EQUAL, LESS, LESS_EQUAL})) {
     token op = prev();
     comparison();
-    throw errors::parser_error(op, "missing left-hand operand");
+    throw parser_error(op, "missing left-hand operand");
   }
 
   if (match({PLUS})) {
     token op = prev();
     term();
-    throw errors::parser_error(op, "missing left-hand operand");
+    throw parser_error(op, "missing left-hand operand");
   }
 
   if (match({SLASH, STAR})) {
     token op = prev();
     factor();
-    throw errors::parser_error(op, "missing left-hand operand");
+    throw parser_error(op, "missing left-hand operand");
   }
 }
 
@@ -305,7 +304,7 @@ auto parser::match(std::initializer_list<token_type> types) -> bool {
 
 auto parser::consume(token_type type, std::string_view message) -> token {
   if (check(type)) return next();
-  throw errors::parser_error(peek(), std::string(message));
+  throw parser_error(peek(), std::string(message));
 }
 
 void parser::synchronise() {

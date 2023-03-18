@@ -1,4 +1,6 @@
+#include <lox/ast/ast_printer.hpp>
 #include <lox/errors.hpp>
+#include <lox/parser/parser.hpp>
 #include <lox/scanner/scanner.hpp>
 #include <lox/token/token.hpp>
 
@@ -17,12 +19,17 @@
 
 static auto run(std::string const& source) -> int {
   lox::scanner scanner(source);
-  fmt::print("=== Printing tokens ===\n[{}]\n",
-             fmt::join(scanner.scan(), ", "));
+  const auto   tokens = scanner.scan();
+  fmt::print("=== Printing tokens ===\n[{}]\n", fmt::join(tokens, ", "));
 
   // Stop if there was an error
-  if (lox::error::errored) return EX_DATAERR;
-  if (lox::error::runtime_errored) return EX_SOFTWARE;
+  if (lox::errors::errored) return EX_DATAERR;
+  if (lox::errors::runtime_errored) return EX_SOFTWARE;
+
+  lox::parser parser(tokens);
+  const auto  stmts = parser.parse();
+  fmt::print("=== Printing AST ===\n{}\n",
+             fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
 
   return EX_OK;
 }
@@ -43,7 +50,7 @@ static auto run_file(std::string const& path) -> int {
   int err = run(ss.str());
   if (err > 0) return err;
 
-  if (lox::error::errored) EX_DATAERR;
+  if (lox::errors::errored) EX_DATAERR;
 
   return EX_OK;
 }
@@ -58,8 +65,8 @@ static void run_prompt() {
     if (std::getline(std::cin, line)) {
       run(line);
 
-      lox::error::errored         = false;
-      lox::error::runtime_errored = false;
+      lox::errors::errored         = false;
+      lox::errors::runtime_errored = false;
     } else {
       fmt::print("\n");
       break;

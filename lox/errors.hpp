@@ -25,7 +25,7 @@ struct runtime_error final : public std::runtime_error {
 };
 
 // Really, this acts like a namespace.
-struct error {
+struct errors {
   static void report(int line, std::string_view message);
   static void report_parser_error(const parser_error& err);
   static void report_runtime_error(const runtime_error& err);
@@ -33,7 +33,7 @@ struct error {
   static bool errored;
   static bool runtime_errored;
 
-  static std::ostream& output;
+  static std::ostream* output;
 };
 
 } // namespace lox

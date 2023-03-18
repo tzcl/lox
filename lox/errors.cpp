@@ -18,17 +18,17 @@ parser_error::parser_error(token token, std::string message)
 runtime_error::runtime_error(token token, const std::string& message)
     : std::runtime_error(message), token_(std::move(token)) {}
 
-bool error::errored         = false;
-bool error::runtime_errored = false;
+bool errors::errored         = false;
+bool errors::runtime_errored = false;
 
-std::ostream& error::output = std::cout;
+std::ostream* errors::output = &std::cout;
 
-void error::report(int line, std::string_view message) {
-  fmt::print(output, "[line {}] Error: {}\n", line, message);
+void errors::report(int line, std::string_view message) {
+  fmt::print(*output, "[line {}] Error: {}\n", line, message);
   errored = true;
 }
 
-void error::report_parser_error(const parser_error& err) {
+void errors::report_parser_error(const parser_error& err) {
   if (err.token_.type == token_type::EOF) {
     report(err.token_.line, fmt::format("at end: {}", err.message_));
   } else {
@@ -37,7 +37,7 @@ void error::report_parser_error(const parser_error& err) {
   }
 }
 
-void error::report_runtime_error(const runtime_error& err) {
+void errors::report_runtime_error(const runtime_error& err) {
   fmt::print("[line {}] Error: '{}' {}\n", err.token_.line, err.token_.lexeme,
              err.what());
   runtime_errored = true;
