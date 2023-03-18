@@ -39,7 +39,7 @@ private:
     ++curr_;
     return true;
   }
-  inline void add_token(token_type type, literal const& lit = literal{}) {
+  inline void add_token(token_type type, const literal& lit = literal{}) {
     // Clang 15 doesn't support parenthesised aggregate initialisation :(
     // tokens_.emplace_back(type, substr(start_, curr_), line_, literal);
     tokens_.push_back(token{type, substr(start_, curr_), line_, lit});
@@ -48,7 +48,7 @@ private:
     return source_.substr(start, end - start);
   }
 
-  std::string const  source_;
+  const std::string  source_;
   std::vector<token> tokens_;
 
   int start_ = 0;

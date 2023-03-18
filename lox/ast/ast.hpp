@@ -1,7 +1,7 @@
 #pragma once
 
-#include <lox/box.hpp>
-#include <lox/parser/token.hpp>
+#include <lox/ast/box.hpp>
+#include <lox/token/token.hpp>
 
 #include <optional>
 #include <variant>
@@ -9,13 +9,11 @@
 
 namespace lox {
 
-// C++ is value-oriented whereas Java is reference-oriented.
+// C++ is value-oriented whereas Java/Python are reference-oriented.
 // > You cannot overwrite a const object and refer to it by the same name
 // > afterwards.
 // https://stackoverflow.com/questions/58414966/move-construction-and-assignment-of-class-with-constant-member
-//
-// That said, it seems like this in possible in C++20 using
-// std::{construct, destroy}_at.
+
 struct literal_expr {
   literal value;
 };

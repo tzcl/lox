@@ -39,7 +39,7 @@ enum class token_type {
 // std::monostate is a well-behaved empty alternative. Putting it first
 // allows for token_literal to be default-constructed.
 // TODO: Intern strings?
-using literal = std::variant<std::monostate, double, std::string>;
+using literal = std::variant<std::monostate, bool, double, std::string>;
 
 auto to_string(literal literal) -> std::string;
 

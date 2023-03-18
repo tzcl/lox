@@ -228,11 +228,9 @@ auto parser::unary() -> expr {
 }
 
 auto parser::primary() -> expr {
-  if (match({FALSE})) return literal_expr{false};
-  if (match({TRUE})) return literal_expr{true};
-  if (match({NIL})) return literal_expr{};
-
-  if (match({NUMBER, STRING})) { return literal_expr{prev().literal}; }
+  if (match({NIL, FALSE, TRUE, NUMBER, STRING})) {
+    return literal_expr{prev().literal};
+  }
 
   if (match({IDENTIFIER})) return variable_expr{prev()};
 

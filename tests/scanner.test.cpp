@@ -20,9 +20,7 @@ TEST_CASE("check tokens") {
         lox::token{STRING, "\"Hello, world\"", 1, "Hello, world"},
         lox::token{NUMBER, "42", 1, 42.},
         lox::token{NUMBER, "1.333", 1, 1.333},
-        // Don't store literal for booleans, can deduce value based on token
-        // type when building AST.
-        lox::token{TRUE, "true", 1},
+        lox::token{TRUE, "true", 1, true},
         lox::token{SEMICOLON, ";", 2},
         lox::token{EOF, "", 3},
     };
@@ -47,14 +45,14 @@ TEST_CASE("check tokens") {
   SUBCASE("keywords") {
     file = "scanner/keywords.lox";
     want = {
-        lox::token{AND, "and", 1},     lox::token{CLASS, "class", 1},
-        lox::token{ELSE, "else", 1},   lox::token{FALSE, "false", 1},
-        lox::token{FOR, "for", 1},     lox::token{FUN, "fun", 1},
-        lox::token{IF, "if", 1},       lox::token{NIL, "nil", 1},
-        lox::token{OR, "or", 1},       lox::token{RETURN, "return", 1},
-        lox::token{SUPER, "super", 1}, lox::token{THIS, "this", 1},
-        lox::token{TRUE, "true", 1},   lox::token{VAR, "var", 1},
-        lox::token{WHILE, "while", 1}, lox::token{EOF, "", 2},
+        lox::token{AND, "and", 1},         lox::token{CLASS, "class", 1},
+        lox::token{ELSE, "else", 1},       lox::token{FALSE, "false", 1, false},
+        lox::token{FOR, "for", 1},         lox::token{FUN, "fun", 1},
+        lox::token{IF, "if", 1},           lox::token{NIL, "nil", 1},
+        lox::token{OR, "or", 1},           lox::token{RETURN, "return", 1},
+        lox::token{SUPER, "super", 1},     lox::token{THIS, "this", 1},
+        lox::token{TRUE, "true", 1, true}, lox::token{VAR, "var", 1},
+        lox::token{WHILE, "while", 1},     lox::token{EOF, "", 2},
     };
   }
   SUBCASE("numbers") {
@@ -117,7 +115,7 @@ TEST_CASE("check tokens") {
     want = {
         lox::token{NUMBER, "2.5", 1, 2.5},
         // Comments get stripped out
-        lox::token{TRUE, "true", 7},
+        lox::token{FALSE, "false", 7, false},
         lox::token{SEMICOLON, ";", 7},
         lox::token{EOF, "", 7},
     };

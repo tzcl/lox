@@ -1,7 +1,7 @@
 #pragma once
 
-#include <lox/ast.hpp>
-#include <lox/parser/token.hpp>
+#include <lox/ast/ast.hpp>
+#include <lox/token/token.hpp>
 
 #include <fmt/core.h>
 #include <fmt/ranges.h>
@@ -13,9 +13,9 @@
 namespace lox {
 
 template <typename T>
-concept printer = requires(T t, stmt const& s) { std::visit(t, s); };
+concept stmt_visitor = requires(T t, stmt const& s) { std::visit(t, s); };
 
-auto print(printer auto p, std::vector<stmt> const& stmts)
+auto print(stmt_visitor auto p, std::vector<stmt> const& stmts)
     -> std::vector<std::string> {
   std::vector<std::string> output;
   std::ranges::transform(

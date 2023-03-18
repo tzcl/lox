@@ -4,4 +4,4 @@
 /* Nested block comment */
 print "hello world";
 */
-true;
+false;

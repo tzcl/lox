@@ -1,7 +1,7 @@
 #pragma once
 
-#include <lox/ast.hpp>
-#include <lox/parser/token.hpp>
+#include <lox/ast/ast.hpp>
+#include <lox/token/token.hpp>
 
 #include <string_view>
 #include <utility>

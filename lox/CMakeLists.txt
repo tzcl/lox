@@ -11,9 +11,9 @@ target_link_libraries(lox PUBLIC fmt::fmt)
 
 target_sources(lox 
   PUBLIC 
+    errors.cpp
     token/token.cpp
     scanner/scanner.cpp
-    errors.cpp
 )
 
 target_compile_options(lox

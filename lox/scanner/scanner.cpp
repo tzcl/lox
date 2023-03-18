@@ -151,7 +151,17 @@ void scanner::identifier() {
   while (is_alphanumeric(peek())) next();
 
   token_type type = get_token_type(substr(start_, curr_));
-  add_token(type);
+  switch (type) {
+  case token_type::TRUE:
+    add_token(type, true);
+    break;
+  case token_type::FALSE:
+    add_token(type, false);
+    break;
+  default:
+    add_token(type);
+    break;
+  }
 }
 
 void scanner::block_comment() {
