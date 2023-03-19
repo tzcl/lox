@@ -78,13 +78,19 @@ struct variable_stmt {
   std::optional<expr> init;
 };
 
+struct return_stmt {
+  token               keyword;
+  std::optional<expr> value;
+};
+
 struct break_stmt {
   int loop_depth;
 };
 
-using stmt = std::variant<expression_stmt, print_stmt, variable_stmt,
-                          break_stmt, struct block_stmt, struct function_stmt,
-                          box<struct if_stmt>, box<struct while_stmt>>;
+using stmt =
+    std::variant<expression_stmt, print_stmt, variable_stmt, return_stmt,
+                 break_stmt, struct block_stmt, struct function_stmt,
+                 box<struct if_stmt>, box<struct while_stmt>>;
 
 struct block_stmt {
   std::vector<stmt> stmts;

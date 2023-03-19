@@ -25,6 +25,8 @@ auto print(stmt_visitor auto p, std::vector<stmt> const& stmts)
   return output;
 }
 
+using namespace std::string_literals;
+
 struct ast_printer {
   int indent = 0;
 
@@ -63,7 +65,7 @@ struct ast_printer {
     std::ranges::transform(e->args, std::begin(args), [this](const expr& ex) {
       return std::visit(*this, ex);
     });
-    return fmt::format("{}: {}", std::visit(*this, e->callee),
+    return fmt::format("{}({})", std::visit(*this, e->callee),
                        fmt::join(args, ","));
   }
 
@@ -81,13 +83,16 @@ struct ast_printer {
   }
 
   auto operator()(const variable_stmt& s) -> std::string {
-    using namespace std::string_literals;
     return fmt::format("var {} = {}", s.name.lexeme,
                        s.init ? std::visit(*this, *s.init) : "nil"s);
   }
 
+  auto operator()(const return_stmt& s) -> std::string {
+    return fmt::format("return {}",
+                       s.value ? std::visit(*this, *s.value) : "nil"s);
+  }
+
   auto operator()(const break_stmt& s) -> std::string {
-    using namespace std::string_literals;
     return fmt::format("break (depth: {})", s.loop_depth);
   }
 

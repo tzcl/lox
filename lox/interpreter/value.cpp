@@ -185,9 +185,7 @@ struct call_visitor {
   interpret_func            interpret;
 
   auto operator()(const function& fn) const -> value {
-    fn.call(interpret, args);
-    // TODO: Return a proper value
-    return {};
+    return fn.call(interpret, args);
   }
   auto operator()(const auto&) const -> value {
     throw runtime_error(paren,
@@ -197,7 +195,6 @@ struct call_visitor {
 
 auto call(token paren, value callee, const std::vector<value>& args,
           interpret_func fn) -> value {
-  fmt::print("index: {}\n", callee.index());
   return std::visit(call_visitor{std::move(paren), args, fn}, callee);
 }
 

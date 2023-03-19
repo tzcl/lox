@@ -22,6 +22,7 @@ private:
   auto statement() -> stmt;
   auto if_statement() -> stmt;
   auto print_statement() -> stmt;
+  auto return_statement() -> stmt;
   auto for_statement() -> stmt;
   auto while_statement() -> stmt;
   auto block_statement() -> std::vector<stmt>;

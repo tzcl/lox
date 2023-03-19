@@ -3,8 +3,10 @@
 
 #include <fmt/core.h>
 #include <fmt/ranges.h>
+#include <fmt/std.h>
 
 #include <cmath>
+#include <exception>
 #include <utility>
 
 namespace lox {
@@ -12,6 +14,16 @@ namespace lox {
 struct break_exception final : public std::exception {
   [[nodiscard]] auto what() const noexcept -> const char* override {
     return "break: jumping out of loop";
+  }
+};
+
+struct return_exception final : public std::exception {
+  explicit return_exception(value result) : value(std::move(result)) {}
+
+  value value;
+
+  [[nodiscard]] auto what() const noexcept -> const char* override {
+    return "return: jumping out of callable";
   }
 };
 
@@ -152,6 +164,13 @@ void interpreter::operator()(const function_stmt& s) {
   throw break_exception();
 }
 
+[[noreturn]] void interpreter::operator()(const return_stmt& s) {
+  value value{};
+  if (s.value) { value = std::visit(*this, *s.value); }
+
+  throw return_exception{value};
+}
+
 void interpreter::operator()(const box<if_stmt>& s) {
   if (values::is_truthy(std::visit(*this, s->cond))) {
     std::visit(*this, s->then);
@@ -186,16 +205,17 @@ void interpret(interpreter& interpreter, const std::vector<stmt>& stmts) {
 }
 
 auto interpret(callable callable) -> value {
-  // TODO: Enable closures
-  environment env{};
-  for (int i = 0; i < std::ssize(callable.params); ++i) {
-    env.define(callable.params[i].lexeme, callable.args[i]);
-  }
+  try {
+    // TODO: Enable closures
+    environment env{};
+    for (int i = 0; i < std::ssize(callable.params); ++i) {
+      env.define(callable.params[i].lexeme, callable.args[i]);
+    }
 
-  interpreter interpreter{env};
-  interpret(interpreter, callable.body);
+    interpreter interpreter{env};
+    interpret(interpreter, callable.body);
+  } catch (const return_exception& e) { return e.value; }
 
-  // TODO: Return a proper value
   return {};
 }
 

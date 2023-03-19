@@ -35,6 +35,7 @@ struct interpreter {
   void operator()(const box<while_stmt>& s);
 
   [[noreturn]] void operator()(break_stmt const& s);
+  [[noreturn]] void operator()(const return_stmt& s);
 };
 
 void interpret(interpreter& interpreter, const std::vector<stmt>& stmts);

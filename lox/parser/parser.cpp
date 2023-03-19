@@ -68,6 +68,7 @@ auto parser::var_declaration() -> stmt {
 auto parser::statement() -> stmt {
   if (match({IF})) return if_statement();
   if (match({PRINT})) return print_statement();
+  if (match({RETURN})) return return_statement();
   if (match({FOR})) return for_statement();
   if (match({WHILE})) return while_statement();
   if (match({LEFT_BRACE})) return block_stmt{block_statement()};
@@ -94,6 +95,16 @@ auto parser::print_statement() -> stmt {
   expr value = expression();
   consume(SEMICOLON, "Expect ';' after value");
   return print_stmt{value};
+}
+
+auto parser::return_statement() -> stmt {
+  token keyword = prev();
+
+  std::optional<expr> value;
+  if (!check(SEMICOLON)) value = expression();
+
+  consume(SEMICOLON, "expect ';' after return value");
+  return return_stmt{keyword, value};
 }
 
 auto parser::for_statement() -> stmt {

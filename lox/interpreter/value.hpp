@@ -16,6 +16,7 @@ namespace lox {
 using value =
     std::variant<std::monostate, bool, double, std::string, struct function>;
 
+// TODO: Could move this into a separate interface
 struct callable {
   const std::vector<token>& params;
   const std::vector<value>& args;
@@ -27,8 +28,8 @@ using interpret_func = auto(*)(callable) -> value;
 struct function {
   function_stmt decl;
 
-  void call(interpret_func fn, const std::vector<value>& args) const {
-    fn(callable{decl.params, args, decl.body});
+  auto call(interpret_func fn, const std::vector<value>& args) const -> value {
+    return fn(callable{decl.params, args, decl.body});
   }
 
   friend auto operator==(const function& a, const function& b) -> bool {
@@ -71,3 +72,11 @@ auto arity(token paren, value callee) -> int;
 } // namespace values
 
 } // namespace lox
+
+template <>
+struct fmt::formatter<lox::value> : formatter<std::string> {
+  template <typename FormatContext>
+  auto format(lox::value const& value, FormatContext& ctx) const {
+    return formatter<std::string>::format(lox::values::to_string(value), ctx);
+  }
+};
