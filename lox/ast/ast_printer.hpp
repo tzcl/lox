@@ -28,49 +28,70 @@ auto print(stmt_visitor auto p, std::vector<stmt> const& stmts)
 struct ast_printer {
   int indent = 0;
 
-  auto operator()(literal_expr const& e) -> std::string {
+  auto operator()(const literal_expr& e) -> std::string {
     return fmt::format("{}", e.literal);
   }
-  auto operator()(variable_expr const& e) -> std::string {
+
+  auto operator()(const variable_expr& e) -> std::string {
     return fmt::format("{}", e.name.lexeme);
   }
-  auto operator()(box<group_expr> const& e) -> std::string {
+
+  auto operator()(const box<group_expr>& e) -> std::string {
     return fmt::format("group: {}", std::visit(*this, e->ex));
   }
-  auto operator()(box<assign_expr> const& e) -> std::string {
+
+  auto operator()(const box<assign_expr>& e) -> std::string {
     return fmt::format("{} = {}", e->name.lexeme, std::visit(*this, e->value));
   }
-  auto operator()(box<unary_expr> const& e) -> std::string {
+
+  auto operator()(const box<unary_expr>& e) -> std::string {
     return fmt::format("({}{})", e->op.lexeme, std::visit(*this, e->right));
   }
-  auto operator()(box<logical_expr> const& e) -> std::string {
+
+  auto operator()(const box<logical_expr>& e) -> std::string {
     return fmt::format("({} {} {})", std::visit(*this, e->left), e->op.lexeme,
                        std::visit(*this, e->right));
   }
-  auto operator()(box<binary_expr> const& e) -> std::string {
+
+  auto operator()(const box<binary_expr>& e) -> std::string {
     return fmt::format("({} {} {})", std::visit(*this, e->left), e->op.lexeme,
                        std::visit(*this, e->right));
   }
-  auto operator()(box<conditional_expr> const& e) -> std::string {
+
+  auto operator()(const box<call_expr>& e) -> std::string {
+    std::vector<std::string> args(std::size(e->args));
+    std::ranges::transform(e->args, std::begin(args), [this](const expr& ex) {
+      return std::visit(*this, ex);
+    });
+    return fmt::format("{}: {}", std::visit(*this, e->callee),
+                       fmt::join(args, ","));
+  }
+
+  auto operator()(const box<conditional_expr>& e) -> std::string {
     return fmt::format("(if {} then {} else {})", std::visit(*this, e->cond),
                        std::visit(*this, e->then), std::visit(*this, e->alt));
   }
-  auto operator()(expression_stmt const& s) -> std::string {
+
+  auto operator()(const expression_stmt& s) -> std::string {
     return fmt::format("expr: {}", std::visit(*this, s.ex));
   }
-  auto operator()(print_stmt const& s) -> std::string {
+
+  auto operator()(const print_stmt& s) -> std::string {
     return fmt::format("print: {}", std::visit(*this, s.ex));
   }
-  auto operator()(variable_stmt const& s) -> std::string {
+
+  auto operator()(const variable_stmt& s) -> std::string {
     using namespace std::string_literals;
     return fmt::format("var {} = {}", s.name.lexeme,
                        s.init ? std::visit(*this, *s.init) : "nil"s);
   }
-  auto operator()(break_stmt const& s) -> std::string {
+
+  auto operator()(const break_stmt& s) -> std::string {
     using namespace std::string_literals;
     return fmt::format("break (depth: {})", s.loop_depth);
   }
-  auto operator()(block_stmt const& s) -> std::string {
+
+  auto operator()(const block_stmt& s) -> std::string {
     std::vector<std::string> stmts(std::size(s.stmts));
     std::ranges::transform(s.stmts, std::begin(stmts), [this](const stmt& ss) {
       return fmt::format("{:{}}{}", "", this->indent + 2,
@@ -79,7 +100,12 @@ struct ast_printer {
     return fmt::format("{{\n{}\n{:{}}}}", fmt::join(stmts, "\n"), "",
                        this->indent);
   }
-  auto operator()(box<if_stmt> const& s) -> std::string {
+
+  auto operator()(const function_stmt& s) -> std::string {
+    return fmt::format("<fn {}>", s.name.lexeme);
+  }
+
+  auto operator()(const box<if_stmt>& s) -> std::string {
     if (s->alt) {
       return fmt::format("if ({}) {} else {}", std::visit(*this, s->cond),
                          std::visit(*this, s->then),
@@ -89,7 +115,8 @@ struct ast_printer {
                          std::visit(*this, s->then));
     }
   }
-  auto operator()(box<while_stmt> const& s) -> std::string {
+
+  auto operator()(const box<while_stmt>& s) -> std::string {
     return fmt::format("while ({}) {}", std::visit(*this, s->cond),
                        std::visit(*this, s->body));
   }

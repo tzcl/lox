@@ -25,7 +25,7 @@ struct variable_expr {
 using expr = std::variant<literal_expr, variable_expr, box<struct group_expr>,
                           box<struct assign_expr>, box<struct unary_expr>,
                           box<struct logical_expr>, box<struct binary_expr>,
-                          box<struct conditional_expr>>;
+                          box<struct call_expr>, box<struct conditional_expr>>;
 
 struct group_expr {
   expr ex;
@@ -53,6 +53,12 @@ struct binary_expr {
   expr  right;
 };
 
+struct call_expr {
+  expr              callee;
+  token             paren;
+  std::vector<expr> args;
+};
+
 struct conditional_expr {
   expr cond;
   expr then;
@@ -77,8 +83,8 @@ struct break_stmt {
 };
 
 using stmt = std::variant<expression_stmt, print_stmt, variable_stmt,
-                          break_stmt, struct block_stmt, box<struct if_stmt>,
-                          box<struct while_stmt>>;
+                          break_stmt, struct block_stmt, struct function_stmt,
+                          box<struct if_stmt>, box<struct while_stmt>>;
 
 struct block_stmt {
   std::vector<stmt> stmts;

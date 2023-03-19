@@ -11,9 +11,11 @@ namespace lox {
 
 class environment {
 public:
-  explicit environment(environment* parent) : parent_(parent) {}
+  explicit environment(environment* parent = nullptr) : parent_(parent) {}
 
-  void set(std::string name, value value) { values_[name] = std::move(value); }
+  void define(std::string name, value value) {
+    values_[name] = std::move(value);
+  }
   void assign(token name, value value);
   auto get(token name) -> value;
 

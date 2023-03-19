@@ -1,9 +1,6 @@
 #include <lox/errors.hpp>
 #include <lox/interpreter/environment.hpp>
 
-#include <fmt/ranges.h>
-#include <utility>
-
 namespace lox {
 
 void environment::assign(token name, value value) {

@@ -17,6 +17,7 @@ public:
 
 private:
   auto declaration() -> stmt;
+  auto function(std::string kind) -> stmt;
   auto var_declaration() -> stmt;
   auto statement() -> stmt;
   auto if_statement() -> stmt;
@@ -37,6 +38,8 @@ private:
   auto term() -> expr;
   auto factor() -> expr;
   auto unary() -> expr;
+  auto call() -> expr;
+  auto finish_call(expr callee) -> expr;
   auto primary() -> expr;
 
   void missing_binary_op();

@@ -24,6 +24,7 @@ target_compile_options(lox
   PRIVATE
     -Weverything  
     -Wno-c++98-compat 
+    -Wno-pre-c++20-compat-pedantic
     -Wno-padded 
     -Wno-sign-conversion 
     -Wno-missing-field-initializers 

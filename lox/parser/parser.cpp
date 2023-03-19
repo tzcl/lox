@@ -8,6 +8,8 @@
 
 namespace lox {
 
+const int MAX_ARGS = 255;
+
 using enum token_type;
 
 // === Parse grammar ===
@@ -20,6 +22,7 @@ auto parser::parse() -> std::vector<stmt> {
 
 auto parser::declaration() -> stmt {
   try {
+    if (match({FUN})) return function("function");
     if (match({VAR})) return var_declaration();
     return statement();
   } catch (parser_error& err) {
@@ -27,6 +30,29 @@ auto parser::declaration() -> stmt {
     synchronise();
     return expression_stmt{};
   }
+}
+
+auto parser::function(std::string kind) -> stmt {
+  token name = consume(IDENTIFIER, fmt::format("expect {} name", kind));
+  consume(LEFT_PAREN, fmt::format("expect '(' after {} name", kind));
+
+  std::vector<token> params;
+  if (!check(RIGHT_PAREN)) {
+    do {
+      if (std::ssize(params) >= 255) {
+        errors::report(peek().line, "can't have more than 255 parameters");
+      }
+
+      params.push_back(consume(IDENTIFIER, "expect parameter name"));
+    } while (match({COMMA}));
+  }
+
+  consume(RIGHT_PAREN, fmt::format("expect ')' after parameters"));
+
+  consume(LEFT_BRACE, fmt::format("expect '{{' before {} body", kind));
+  std::vector<stmt> body = block_statement();
+
+  return function_stmt{name, params, body};
 }
 
 auto parser::var_declaration() -> stmt {
@@ -223,7 +249,34 @@ auto parser::unary() -> expr {
     return unary_expr{op, right};
   }
 
-  return primary();
+  return call();
+}
+
+auto parser::call() -> expr {
+  expr ex = primary();
+
+  while (true) {
+    if (match({LEFT_PAREN})) ex = finish_call(ex);
+    else break;
+  }
+
+  return ex;
+}
+
+auto parser::finish_call(expr callee) -> expr {
+  std::vector<expr> args;
+  if (!check(RIGHT_PAREN)) {
+    do {
+      if (std::ssize(args) >= MAX_ARGS) {
+        errors::report(peek().line, "can't have more than 255 arguments");
+      }
+      args.push_back(conditional());
+    } while (match({COMMA}));
+  }
+
+  token paren = consume(RIGHT_PAREN, "expected ')' after arguments");
+
+  return call_expr{std::move(callee), paren, args};
 }
 
 auto parser::primary() -> expr {
