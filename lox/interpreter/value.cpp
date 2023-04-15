@@ -23,8 +23,8 @@ auto to_string(value value) -> std::string {
                  [](bool arg) { return arg ? "true"s : "false"s; },
                  [](double arg) { return fmt::format("{}", arg); },
                  [](const std::string& arg) { return arg; },
-                 [](const function& f) {
-                   return fmt::format("<fn {}>", f.decl.name.lexeme);
+                 [](const box<function>& f) {
+                   return fmt::format("<fn {}>", f->decl.name.lexeme);
                  }},
       value);
 }
@@ -41,7 +41,7 @@ auto is_truthy(value value) -> bool {
   return std::visit(overloaded{
                         [](const std::monostate&) { return false; },
                         [](bool arg) { return arg; },
-                        [](auto) { return true; },
+                        [](auto&) { return true; },
                     },
                     value);
 }
@@ -60,6 +60,8 @@ auto negate(token token, value value) -> double {
   return std::visit(negate_visitor{std::move(token)}, value);
 }
 
+// TODO: Should these functions actually be const??
+// Is it worth changing them to allow for moving?
 struct less_than_visitor {
   token token;
 
@@ -94,20 +96,19 @@ auto greater_equal(token token, value left, value right) -> bool {
 struct plus_visitor {
   token token;
 
-  auto operator()(double left, double right) const -> number_or_string {
+  auto operator()(double left, double right) -> number_or_string {
     return left + right;
   }
-  auto operator()(std::string left, std::string right) const
-      -> number_or_string {
+  auto operator()(std::string left, std::string right) -> number_or_string {
     return left + right;
   }
-  auto operator()(double left, std::string right) const -> number_or_string {
+  auto operator()(double left, std::string right) -> number_or_string {
     return fmt::format("{}{}", left, right);
   }
-  auto operator()(std::string left, double right) const -> number_or_string {
+  auto operator()(std::string left, double right) -> number_or_string {
     return fmt::format("{}{}", left, right);
   }
-  auto operator()(auto&, auto&) const -> number_or_string {
+  auto operator()(auto&, auto&) -> number_or_string {
     throw runtime_error(token, "operands must be numbers or strings");
   }
 };
@@ -119,10 +120,8 @@ auto plus(token token, value left, value right) -> number_or_string {
 struct minus_visitor {
   token token;
 
-  auto operator()(double left, double right) const -> double {
-    return left - right;
-  }
-  auto operator()(auto&, auto&) const -> double {
+  auto operator()(double left, double right) -> double { return left - right; }
+  auto operator()(auto&, auto&) -> double {
     throw runtime_error(std::move(token), "operands must be two numbers");
   }
 };
@@ -184,8 +183,8 @@ struct call_visitor {
   const std::vector<value>& args;
   interpret_func            interpret;
 
-  auto operator()(const function& fn) const -> value {
-    return fn.call(interpret, args);
+  auto operator()(const box<function>& fn) const -> value {
+    return fn->call(interpret, args);
   }
   auto operator()(const auto&) const -> value {
     throw runtime_error(paren,
@@ -202,8 +201,8 @@ auto call(token paren, value callee, const std::vector<value>& args,
 struct arity_visitor {
   token paren;
 
-  auto operator()(const function& fn) const -> int {
-    return static_cast<int>(std::ssize(fn.decl.params));
+  auto operator()(const box<function>& fn) const -> int {
+    return static_cast<int>(std::ssize(fn->decl.params));
   }
   auto operator()(const auto&) const -> int {
     throw runtime_error(paren,

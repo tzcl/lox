@@ -27,7 +27,7 @@ TEST_CASE("for statements") {
 
   std::ostringstream buffer;
 
-  lox::interpreter       interpreter{lox::environment(nullptr), buffer};
+  lox::interpreter interpreter{std::make_shared<lox::environment>(), buffer};
   std::vector<lox::stmt> stmts = parser.parse();
   lox::interpret(interpreter, stmts);
 
@@ -54,6 +54,10 @@ TEST_CASE("functions") {
     file = "interpreter/fib.lox";
     want = read_file("interpreter/fib.out");
   }
+  SUBCASE("closure") {
+    file = "interpreter/closure.lox";
+    want = "1\n1\nnil\n2\n2\nnil\n";
+  }
 
   const auto input = read_file(file);
 
@@ -62,7 +66,7 @@ TEST_CASE("functions") {
 
   std::ostringstream buffer;
 
-  lox::interpreter       interpreter{lox::environment(nullptr), buffer};
+  lox::interpreter interpreter{std::make_shared<lox::environment>(), buffer};
   std::vector<lox::stmt> stmts = parser.parse();
   lox::interpret(interpreter, stmts);
 

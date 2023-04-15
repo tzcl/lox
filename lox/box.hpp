@@ -41,6 +41,11 @@ public:
 
   auto operator->() -> T* { return impl_.get(); }
   auto operator->() const -> const T* { return impl_.get(); }
+
+  // TODO: Does this make sense?
+  friend auto operator==(const box<T>& l, const box<T>& r) -> bool {
+    return *l == *r;
+  }
 };
 
 } // namespace lox

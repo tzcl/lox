@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include <fmt/format.h>
+
 namespace lox {
 
 class environment {
@@ -19,7 +21,7 @@ public:
   void assign(token name, value value);
   auto get(token name) -> value;
 
-private:
+  // private:
   // Use a raw pointer because we want a non-owning pointer that may be null.
   environment* parent_;
 

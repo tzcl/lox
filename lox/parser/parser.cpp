@@ -211,8 +211,6 @@ auto parser::logic_and() -> expr {
   return left_assoc<logical_expr>(&parser::comma, {AND});
 }
 
-// TODO: Have to be careful with function parameters as this will cause
-// f(1, 2) to be parsed as f((1, 2)).
 auto parser::comma() -> expr {
   return left_assoc<binary_expr>(&parser::conditional, {COMMA});
 }

@@ -13,6 +13,7 @@ namespace lox {
 // > You cannot overwrite a const object and refer to it by the same name
 // > afterwards.
 // https://stackoverflow.com/questions/58414966/move-construction-and-assignment-of-class-with-constant-member
+// Therefore, I can't declare the members of these structs to be const.
 
 struct literal_expr {
   literal literal;
@@ -89,7 +90,7 @@ struct break_stmt {
 
 using stmt =
     std::variant<expression_stmt, print_stmt, variable_stmt, return_stmt,
-                 break_stmt, struct block_stmt, struct function_stmt,
+                 break_stmt, box<struct block_stmt>, box<struct function_stmt>,
                  box<struct if_stmt>, box<struct while_stmt>>;
 
 struct block_stmt {

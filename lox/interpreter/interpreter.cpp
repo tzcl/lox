@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <exception>
+#include <memory>
 #include <utility>
 
 namespace lox {
@@ -32,8 +33,7 @@ auto interpreter::operator()(const literal_expr& e) -> value {
 }
 
 auto interpreter::operator()(const variable_expr& e) -> value {
-  value value = env.get(e.name);
-  return value;
+  return env->get(e.name);
 }
 
 auto interpreter::operator()(const box<group_expr>& e) -> value {
@@ -42,7 +42,7 @@ auto interpreter::operator()(const box<group_expr>& e) -> value {
 
 auto interpreter::operator()(const box<assign_expr>& e) -> value {
   value value = std::visit(*this, e->value);
-  env.assign(e->name, value);
+  env->assign(e->name, value);
   return value;
 }
 
@@ -120,9 +120,10 @@ auto interpreter::operator()(const box<call_expr>& e) -> value {
                                     std::ssize(args)));
   }
 
-  return values::call(e->paren, callee, args, [this](callable callable) {
-    return interpret(callable);
-  });
+  return values::call(e->paren, callee, args,
+                      [this](callable callable, env_ptr env_ptr) -> value {
+                        return interpret(callable, env_ptr);
+                      });
 }
 
 auto interpreter::operator()(const box<conditional_expr>& e) -> value {
@@ -149,17 +150,18 @@ void interpreter::operator()(const variable_stmt& s) {
   value value;
   if (s.init) value = std::visit(*this, *s.init);
 
-  env.define(s.name.lexeme, value);
+  env->define(s.name.lexeme, value);
 }
 
-void interpreter::operator()(const block_stmt& s) {
-  interpreter interpreter{environment(&env), output}; // create new scope
-  for (const auto& ss : s.stmts) { std::visit(interpreter, ss); }
+void interpreter::operator()(const box<block_stmt>& s) {
+  interpreter interpreter{std::make_shared<environment>(env.get()),
+                          output}; // create new scope
+  for (const auto& ss : s->stmts) { std::visit(interpreter, ss); }
 }
 
-void interpreter::operator()(const function_stmt& s) {
-  function fn{s};
-  env.define(s.name.lexeme, std::move(fn));
+void interpreter::operator()(const box<function_stmt>& s) {
+  function fn{*s, env};
+  env->define(s->name.lexeme, fn);
 }
 
 [[noreturn]] void interpreter::operator()(const break_stmt& /*s*/) {
@@ -207,16 +209,17 @@ void interpret(interpreter& interpreter, const std::vector<stmt>& stmts) {
 }
 
 // Implements interpret_func
-auto interpreter::interpret(callable callable) const -> value {
+auto interpreter::interpret(callable callable, env_ptr env_ptr) -> value {
   try {
-    // TODO: Enable closures
-    environment closure{env};
+    std::shared_ptr<environment> nested_env =
+        std::make_shared<environment>(env_ptr.get());
+
     for (int i = 0; i < std::ssize(callable.params); ++i) {
-      closure.define(callable.params[i].lexeme, callable.args[i]);
+      nested_env->define(callable.params[i].lexeme, callable.args[i]);
     }
 
-    interpreter interpreter{closure, output};
-    lox::interpret(interpreter, callable.body);
+    lox::interpreter updated{nested_env, output};
+    lox::interpret(updated, callable.body);
   } catch (const return_exception& e) { return e.value; }
 
   return {};

@@ -96,9 +96,9 @@ struct ast_printer {
     return fmt::format("break (depth: {})", s.loop_depth);
   }
 
-  auto operator()(const block_stmt& s) -> std::string {
-    std::vector<std::string> stmts(std::size(s.stmts));
-    std::ranges::transform(s.stmts, std::begin(stmts), [this](const stmt& ss) {
+  auto operator()(const box<block_stmt>& s) -> std::string {
+    std::vector<std::string> stmts(std::size(s->stmts));
+    std::ranges::transform(s->stmts, std::begin(stmts), [this](const stmt& ss) {
       return fmt::format("{:{}}{}", "", this->indent + 2,
                          std::visit(ast_printer{this->indent + 2}, ss));
     });
@@ -106,8 +106,8 @@ struct ast_printer {
                        this->indent);
   }
 
-  auto operator()(const function_stmt& s) -> std::string {
-    return fmt::format("<fn {}>", s.name.lexeme);
+  auto operator()(const box<function_stmt>& s) -> std::string {
+    return fmt::format("<fn {}>", s->name.lexeme);
   }
 
   auto operator()(const box<if_stmt>& s) -> std::string {

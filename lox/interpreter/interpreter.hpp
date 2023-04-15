@@ -13,7 +13,7 @@
 namespace lox {
 
 struct interpreter {
-  environment   env{};
+  env_ptr       env = std::make_shared<environment>();
   std::ostream& output{std::cout};
 
   auto operator()(const literal_expr& e) -> value;
@@ -26,13 +26,14 @@ struct interpreter {
   auto operator()(const box<call_expr>& e) -> value;
   auto operator()(const box<conditional_expr>& e) -> value;
 
-  auto interpret(callable callable) const -> value;
+  // TODO: This feels hacky
+  auto interpret(callable callable, env_ptr env_ptr) -> value;
 
   void operator()(const expression_stmt& s);
   void operator()(const print_stmt& s);
   void operator()(const variable_stmt& s);
-  void operator()(const block_stmt& s);
-  void operator()(const function_stmt& s);
+  void operator()(const box<block_stmt>& s);
+  void operator()(const box<function_stmt>& s);
   void operator()(const box<if_stmt>& s);
   void operator()(const box<while_stmt>& s);
 
