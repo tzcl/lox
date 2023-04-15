@@ -195,7 +195,8 @@ struct call_visitor {
 
 auto call(token paren, value callee, const std::vector<value>& args,
           interpret_func fn) -> value {
-  return std::visit(call_visitor{std::move(paren), args, fn}, callee);
+  return std::visit(call_visitor{std::move(paren), args, std::move(fn)},
+                    callee);
 }
 
 struct arity_visitor {

@@ -23,7 +23,7 @@ static auto run(lox::interpreter& interpreter, std::string const& source)
     -> int {
   lox::scanner scanner(source);
   const auto   tokens = scanner.scan();
-  fmt::print("=== Printing tokens ===\n[{}]\n", fmt::join(tokens, ", "));
+  // fmt::print("=== Printing tokens ===\n[{}]\n", fmt::join(tokens, ", "));
 
   // Stop if there was an error
   if (lox::errors::errored) return EX_DATAERR;
@@ -31,10 +31,10 @@ static auto run(lox::interpreter& interpreter, std::string const& source)
 
   lox::parser parser(tokens);
   const auto  stmts = parser.parse();
-  fmt::print("=== Printing AST ===\n{}\n",
-             fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
+  // fmt::print("=== Printing AST ===\n{}\n",
+  // fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
 
-  fmt::print("=== Evaluating AST ===\n");
+  // fmt::print("=== Evaluating AST ===\n");
   lox::interpret(interpreter, stmts);
 
   return EX_OK;

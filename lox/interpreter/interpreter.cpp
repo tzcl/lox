@@ -120,7 +120,9 @@ auto interpreter::operator()(const box<call_expr>& e) -> value {
                                     std::ssize(args)));
   }
 
-  return values::call(e->paren, callee, args, interpret);
+  return values::call(e->paren, callee, args, [this](callable callable) {
+    return interpret(callable);
+  });
 }
 
 auto interpreter::operator()(const box<conditional_expr>& e) -> value {
@@ -204,16 +206,17 @@ void interpret(interpreter& interpreter, const std::vector<stmt>& stmts) {
   } catch (const runtime_error& err) { errors::report_runtime_error(err); }
 }
 
-auto interpret(callable callable) -> value {
+// Implements interpret_func
+auto interpreter::interpret(callable callable) const -> value {
   try {
     // TODO: Enable closures
-    environment env{};
+    environment closure{env};
     for (int i = 0; i < std::ssize(callable.params); ++i) {
-      env.define(callable.params[i].lexeme, callable.args[i]);
+      closure.define(callable.params[i].lexeme, callable.args[i]);
     }
 
-    interpreter interpreter{env};
-    interpret(interpreter, callable.body);
+    interpreter interpreter{closure, output};
+    lox::interpret(interpreter, callable.body);
   } catch (const return_exception& e) { return e.value; }
 
   return {};

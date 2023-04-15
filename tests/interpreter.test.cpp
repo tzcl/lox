@@ -6,7 +6,7 @@
 
 #include <sstream>
 
-TEST_CASE("for statement") {
+TEST_CASE("for statements") {
   std::string file;
   std::string expected;
 
@@ -23,7 +23,42 @@ TEST_CASE("for statement") {
   const auto want  = read_file(expected);
 
   lox::scanner scanner{input};
-  lox::parser  parser{scanner.tokens()};
+  lox::parser  parser{scanner.scan()};
+
+  std::ostringstream buffer;
+
+  lox::interpreter       interpreter{lox::environment(nullptr), buffer};
+  std::vector<lox::stmt> stmts = parser.parse();
+  lox::interpret(interpreter, stmts);
+
+  REQUIRE(not buffer.str().empty());
+  std::string got = buffer.str();
+  REQUIRE(want == got);
+}
+
+// TODO: Native functions
+
+TEST_CASE("functions") {
+  std::string file;
+  std::string want;
+
+  SUBCASE("sayhi") {
+    file = "interpreter/sayhi.lox";
+    want = "Hi, Dear Reader!\nnil\n";
+  }
+  SUBCASE("count") {
+    file = "interpreter/count.lox";
+    want = "1\n2\n3\nnil\n";
+  }
+  SUBCASE("fib") {
+    file = "interpreter/fib.lox";
+    want = read_file("interpreter/fib.out");
+  }
+
+  const auto input = read_file(file);
+
+  lox::scanner scanner{input};
+  lox::parser  parser{scanner.scan()};
 
   std::ostringstream buffer;
 

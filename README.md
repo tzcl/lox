@@ -51,3 +51,4 @@ So far, I've been able to build and run on WSL and my M1 MacBook using `clang 15
 
 - [ ] Write about the visitor pattern.
 - [ ] Try using `mpark/patterns` and refactor code with variants.
+- [ ] Try to merge literals and values (don't need both) - make everything a literal

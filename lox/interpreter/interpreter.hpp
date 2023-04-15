@@ -26,6 +26,8 @@ struct interpreter {
   auto operator()(const box<call_expr>& e) -> value;
   auto operator()(const box<conditional_expr>& e) -> value;
 
+  auto interpret(callable callable) const -> value;
+
   void operator()(const expression_stmt& s);
   void operator()(const print_stmt& s);
   void operator()(const variable_stmt& s);
@@ -39,7 +41,5 @@ struct interpreter {
 };
 
 void interpret(interpreter& interpreter, const std::vector<stmt>& stmts);
-
-auto interpret(callable callable) -> value;
 
 } // namespace lox
