@@ -7,40 +7,22 @@
 
 #include <iostream>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
 namespace lox {
 
-struct interpreter {
-  env_ptr       env = std::make_shared<environment>();
-  std::ostream& output{std::cout};
+class interpreter {
+public:
+  explicit interpreter(std::ostream& output = std::cout);
 
-  auto operator()(const literal_expr& e) -> value;
-  auto operator()(const variable_expr& e) -> value;
-  auto operator()(const box<group_expr>& e) -> value;
-  auto operator()(const box<assign_expr>& e) -> value;
-  auto operator()(const box<unary_expr>& e) -> value;
-  auto operator()(const box<logical_expr>& e) -> value;
-  auto operator()(const box<binary_expr>& e) -> value;
-  auto operator()(const box<call_expr>& e) -> value;
-  auto operator()(const box<conditional_expr>& e) -> value;
+  void interpret(std::vector<stmt> const& stmts);
 
-  // TODO: This feels hacky
-  auto interpret(callable callable, env_ptr env_ptr) -> value;
-
-  void operator()(const expression_stmt& s);
-  void operator()(const print_stmt& s);
-  void operator()(const variable_stmt& s);
-  void operator()(const box<block_stmt>& s);
-  void operator()(const box<function_stmt>& s);
-  void operator()(const box<if_stmt>& s);
-  void operator()(const box<while_stmt>& s);
-
-  [[noreturn]] void operator()(break_stmt const& s);
-  [[noreturn]] void operator()(const return_stmt& s);
+private:
+  environment   globals_;
+  env_ptr       env;
+  std::ostream& output_;
 };
-
-void interpret(interpreter& interpreter, const std::vector<stmt>& stmts);
 
 } // namespace lox

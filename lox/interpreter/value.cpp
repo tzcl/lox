@@ -19,12 +19,15 @@ template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 auto to_string(value value) -> std::string {
   using namespace std::string_literals;
   return std::visit(
-      overloaded{[](const std::monostate&) { return "nil"s; },
+      overloaded{[](std::monostate const&) { return "nil"s; },
                  [](bool arg) { return arg ? "true"s : "false"s; },
                  [](double arg) { return fmt::format("{}", arg); },
-                 [](const std::string& arg) { return arg; },
-                 [](const box<function>& f) {
+                 [](std::string const& arg) { return arg; },
+                 [](box<function> const& f) {
                    return fmt::format("<fn {}>", f->decl.name.lexeme);
+                 },
+                 [](box<builtin> const& b) {
+                   return fmt::format("<native {}>", b->name);
                  }},
       value);
 }
@@ -39,7 +42,7 @@ auto to_value(number_or_string result) -> value {
 
 auto is_truthy(value value) -> bool {
   return std::visit(overloaded{
-                        [](const std::monostate&) { return false; },
+                        [](std::monostate const&) { return false; },
                         [](bool arg) { return arg; },
                         [](auto&) { return true; },
                     },
@@ -68,8 +71,7 @@ struct less_than_visitor {
   auto operator()(double left, double right) const -> bool {
     return left < right;
   }
-  auto operator()(const std::string& left, const std::string& right) const
-      -> bool {
+  auto operator()(std::string left, std::string right) const -> bool {
     return left < right;
   }
   auto operator()(auto&, auto&) const -> bool {
@@ -180,19 +182,20 @@ auto divide(token token, value left, value right) -> double {
 
 struct call_visitor {
   token                     paren;
-  const std::vector<value>& args;
+  std::vector<value> const& args;
   interpret_func            interpret;
 
-  auto operator()(const box<function>& fn) const -> value {
+  auto operator()(box<function> const& fn) const -> value {
     return fn->call(interpret, args);
   }
-  auto operator()(const auto&) const -> value {
+  auto operator()(box<builtin> const& b) const -> value { return b->fn(args); }
+  auto operator()(auto const&) const -> value {
     throw runtime_error(paren,
                         "call visitor: can only call functions and classes");
   }
 };
 
-auto call(token paren, value callee, const std::vector<value>& args,
+auto call(token paren, value callee, std::vector<value> const& args,
           interpret_func fn) -> value {
   return std::visit(call_visitor{std::move(paren), args, std::move(fn)},
                     callee);
@@ -201,10 +204,11 @@ auto call(token paren, value callee, const std::vector<value>& args,
 struct arity_visitor {
   token paren;
 
-  auto operator()(const box<function>& fn) const -> int {
+  auto operator()(box<function> const& fn) const -> int {
     return static_cast<int>(std::ssize(fn->decl.params));
   }
-  auto operator()(const auto&) const -> int {
+  auto operator()(box<builtin> const& b) const -> int { return b->arity; }
+  auto operator()(auto const&) const -> int {
     throw runtime_error(paren,
                         "arity visitor: can only call functions and classes");
   }

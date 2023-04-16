@@ -6,69 +6,47 @@
 
 #include <sstream>
 
-TEST_CASE("for statements") {
-  std::string file;
-  std::string expected;
-
-  SUBCASE("0 to 9") {
-    file     = "interpreter/for.lox";
-    expected = "interpreter/for.out";
-  }
-  SUBCASE("break") {
-    file     = "interpreter/break.lox";
-    expected = "interpreter/break.out";
-  }
-
-  const auto input = read_file(file);
-  const auto want  = read_file(expected);
-
-  lox::scanner scanner{input};
-  lox::parser  parser{scanner.scan()};
-
-  std::ostringstream buffer;
-
-  lox::interpreter interpreter{std::make_shared<lox::environment>(), buffer};
-  std::vector<lox::stmt> stmts = parser.parse();
-  lox::interpret(interpreter, stmts);
-
-  REQUIRE(not buffer.str().empty());
-  std::string got = buffer.str();
-  REQUIRE(want == got);
-}
-
-// TODO: Native functions
-
-TEST_CASE("functions") {
-  std::string file;
+TEST_CASE("interpreter") {
+  std::string input;
   std::string want;
 
+  SUBCASE("loop 0 to 9") {
+    input = read_file("interpreter/for.lox");
+    want  = read_file("interpreter/for.out");
+  }
+  SUBCASE("loop break") {
+    input = read_file("interpreter/break.lox");
+    want  = read_file("interpreter/break.out");
+  }
   SUBCASE("sayhi") {
-    file = "interpreter/sayhi.lox";
-    want = "Hi, Dear Reader!\nnil\n";
+    input = read_file("interpreter/sayhi.lox");
+    want  = "Hi, Dear Reader!\nnil\n";
   }
   SUBCASE("count") {
-    file = "interpreter/count.lox";
-    want = "1\n2\n3\nnil\n";
+    input = read_file("interpreter/count.lox");
+    want  = "1\n2\n3\nnil\n";
   }
   SUBCASE("fib") {
-    file = "interpreter/fib.lox";
-    want = read_file("interpreter/fib.out");
+    input = read_file("interpreter/fib.lox");
+    want  = read_file("interpreter/fib.out");
   }
   SUBCASE("closure") {
-    file = "interpreter/closure.lox";
-    want = "1\n1\nnil\n2\n2\nnil\n";
+    input = read_file("interpreter/closure.lox");
+    want  = "1\n1\nnil\n2\n2\nnil\n";
   }
-
-  const auto input = read_file(file);
+  SUBCASE("native fn") {
+    input = R"(min("a", "b");)";
+    want  = "a\n";
+  }
 
   lox::scanner scanner{input};
   lox::parser  parser{scanner.scan()};
 
   std::ostringstream buffer;
 
-  lox::interpreter interpreter{std::make_shared<lox::environment>(), buffer};
+  lox::interpreter       interpreter{buffer};
   std::vector<lox::stmt> stmts = parser.parse();
-  lox::interpret(interpreter, stmts);
+  interpreter.interpret(stmts);
 
   REQUIRE(not buffer.str().empty());
   std::string got = buffer.str();

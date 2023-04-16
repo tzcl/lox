@@ -8,12 +8,25 @@
 #include <cmath>
 #include <exception>
 #include <memory>
+#include <ranges>
 #include <utility>
 
 namespace lox {
 
+interpreter::interpreter(std::ostream& output)
+    : globals_{environment{}}, env{std::make_shared<environment>(&globals_)},
+      output_(output) {
+  globals_.define("pi", 3.14);
+  globals_.define("min", builtin{"min", 2, [](std::vector<value> args) {
+                                   return values::less_equal(token{}, args[0],
+                                                             args[1])
+                                            ? args[0]
+                                            : args[1];
+                                 }});
+}
+
 struct break_exception final : public std::exception {
-  [[nodiscard]] auto what() const noexcept -> const char* override {
+  [[nodiscard]] auto what() const noexcept -> char const* override {
     return "break: jumping out of loop";
   }
 };
@@ -23,30 +36,59 @@ struct return_exception final : public std::exception {
 
   value value;
 
-  [[nodiscard]] auto what() const noexcept -> const char* override {
+  [[nodiscard]] auto what() const noexcept -> char const* override {
     return "return: jumping out of callable";
   }
 };
 
-auto interpreter::operator()(const literal_expr& e) -> value {
+struct visitor {
+  env_ptr       env;
+  std::ostream& output;
+
+  auto operator()(literal_expr const& e) -> value;
+  auto operator()(variable_expr const& e) -> value;
+  auto operator()(box<group_expr> const& e) -> value;
+  auto operator()(box<assign_expr> const& e) -> value;
+  auto operator()(box<unary_expr> const& e) -> value;
+  auto operator()(box<logical_expr> const& e) -> value;
+  auto operator()(box<binary_expr> const& e) -> value;
+  auto operator()(box<call_expr> const& e) -> value;
+  auto operator()(box<conditional_expr> const& e) -> value;
+
+  // TODO: This feels hacky
+  auto interpret(callable callable, env_ptr const& env_ptr) -> value;
+
+  void operator()(expression_stmt const& s);
+  void operator()(print_stmt const& s);
+  void operator()(variable_stmt const& s);
+  void operator()(box<block_stmt> const& s);
+  void operator()(box<function_stmt> const& s);
+  void operator()(box<if_stmt> const& s);
+  void operator()(box<while_stmt> const& s);
+
+  [[noreturn]] void operator()(break_stmt const& s);
+  [[noreturn]] void operator()(return_stmt const& s);
+};
+
+auto visitor::operator()(literal_expr const& e) -> value {
   return values::to_value(e.literal);
 }
 
-auto interpreter::operator()(const variable_expr& e) -> value {
+auto visitor::operator()(variable_expr const& e) -> value {
   return env->get(e.name);
 }
 
-auto interpreter::operator()(const box<group_expr>& e) -> value {
+auto visitor::operator()(box<group_expr> const& e) -> value {
   return std::visit(*this, e->ex);
 }
 
-auto interpreter::operator()(const box<assign_expr>& e) -> value {
+auto visitor::operator()(box<assign_expr> const& e) -> value {
   value value = std::visit(*this, e->value);
   env->assign(e->name, value);
   return value;
 }
 
-auto interpreter::operator()(const box<unary_expr>& e) -> value {
+auto visitor::operator()(box<unary_expr> const& e) -> value {
   value right = std::visit(*this, e->right);
 
   switch (e->op.type) {
@@ -59,7 +101,7 @@ auto interpreter::operator()(const box<unary_expr>& e) -> value {
   }
 }
 
-auto interpreter::operator()(const box<logical_expr>& e) -> value {
+auto visitor::operator()(box<logical_expr> const& e) -> value {
   value left = std::visit(*this, e->left);
 
   // Short-circuiting
@@ -73,7 +115,7 @@ auto interpreter::operator()(const box<logical_expr>& e) -> value {
   return std::visit(*this, e->right);
 }
 
-auto interpreter::operator()(const box<binary_expr>& e) -> value {
+auto visitor::operator()(box<binary_expr> const& e) -> value {
   // Note, we evaluate the LHS before the RHS.
   // Also, we evaluate both operands before checking their types are valid.
   value left  = std::visit(*this, e->left);
@@ -107,11 +149,11 @@ auto interpreter::operator()(const box<binary_expr>& e) -> value {
   }
 }
 
-auto interpreter::operator()(const box<call_expr>& e) -> value {
+auto visitor::operator()(box<call_expr> const& e) -> value {
   value callee = std::visit(*this, e->callee);
 
   std::vector<value> args;
-  for (const auto& arg : e->args) { args.push_back(std::visit(*this, arg)); }
+  for (auto const& arg : e->args) { args.push_back(std::visit(*this, arg)); }
 
   if (std::ssize(args) != values::arity(e->paren, callee)) {
     throw runtime_error(e->paren,
@@ -120,13 +162,15 @@ auto interpreter::operator()(const box<call_expr>& e) -> value {
                                     std::ssize(args)));
   }
 
-  return values::call(e->paren, callee, args,
-                      [this](callable callable, env_ptr env_ptr) -> value {
-                        return interpret(callable, env_ptr);
-                      });
+  // TODO: Fix me up
+  return values::call(
+      e->paren, callee, args,
+      [this](callable callable, env_ptr const& env_ptr) -> value {
+        return interpret(callable, env_ptr);
+      });
 }
 
-auto interpreter::operator()(const box<conditional_expr>& e) -> value {
+auto visitor::operator()(box<conditional_expr> const& e) -> value {
   value cond = std::visit(*this, e->cond);
 
   // This implicitly converts any expression into a bool (may be unexpected)
@@ -137,45 +181,43 @@ auto interpreter::operator()(const box<conditional_expr>& e) -> value {
   }
 }
 
-void interpreter::operator()(const expression_stmt& s) {
-  std::visit(*this, s.ex);
-}
+void visitor::operator()(expression_stmt const& s) { std::visit(*this, s.ex); }
 
-void interpreter::operator()(const print_stmt& s) {
+void visitor::operator()(print_stmt const& s) {
   value value = std::visit(*this, s.ex);
+  // TODO: How to get output to visitor?
   output << fmt::format("{}\n", values::to_string(value));
 }
 
-void interpreter::operator()(const variable_stmt& s) {
+void visitor::operator()(variable_stmt const& s) {
   value value;
   if (s.init) value = std::visit(*this, *s.init);
 
   env->define(s.name.lexeme, value);
 }
 
-void interpreter::operator()(const box<block_stmt>& s) {
-  interpreter interpreter{std::make_shared<environment>(env.get()),
-                          output}; // create new scope
-  for (const auto& ss : s->stmts) { std::visit(interpreter, ss); }
+void visitor::operator()(box<block_stmt> const& s) {
+  visitor visitor{std::make_shared<environment>(env.get()), output};
+  for (auto const& ss : s->stmts) { std::visit(visitor, ss); }
 }
 
-void interpreter::operator()(const box<function_stmt>& s) {
+void visitor::operator()(box<function_stmt> const& s) {
   function fn{*s, env};
   env->define(s->name.lexeme, fn);
 }
 
-[[noreturn]] void interpreter::operator()(const break_stmt& /*s*/) {
+[[noreturn]] void visitor::operator()(break_stmt const& /*s*/) {
   throw break_exception();
 }
 
-[[noreturn]] void interpreter::operator()(const return_stmt& s) {
+[[noreturn]] void visitor::operator()(return_stmt const& s) {
   value value{};
   if (s.value) { value = std::visit(*this, *s.value); }
 
   throw return_exception{value};
 }
 
-void interpreter::operator()(const box<if_stmt>& s) {
+void visitor::operator()(box<if_stmt> const& s) {
   if (values::is_truthy(std::visit(*this, s->cond))) {
     std::visit(*this, s->then);
   } else if (s->alt) {
@@ -183,7 +225,7 @@ void interpreter::operator()(const box<if_stmt>& s) {
   }
 }
 
-void interpreter::operator()(const box<while_stmt>& s) {
+void visitor::operator()(box<while_stmt> const& s) {
   try {
     while (values::is_truthy(std::visit(*this, s->cond))) {
       std::visit(*this, s->body);
@@ -193,34 +235,37 @@ void interpreter::operator()(const box<while_stmt>& s) {
   }
 }
 
-// Use a reference because we want an in-out parameter.
-void interpret(interpreter& interpreter, const std::vector<stmt>& stmts) {
+static void interpret_stmts(visitor visitor, std::vector<stmt> const& stmts) {
   try {
-    for (const auto& s : stmts) {
+    for (auto const& s : stmts) {
       if (std::holds_alternative<expression_stmt>(s)) {
         auto  expr  = std::get<expression_stmt>(s);
-        value value = std::visit(interpreter, expr.ex);
-        interpreter.output << fmt::format("{}\n", values::to_string(value));
+        value value = std::visit(visitor, expr.ex);
+        visitor.output << fmt::format("{}\n", values::to_string(value));
       } else {
-        std::visit(interpreter, s);
+        std::visit(visitor, s);
       }
     }
-  } catch (const runtime_error& err) { errors::report_runtime_error(err); }
+  } catch (runtime_error const& err) { errors::report_runtime_error(err); }
+}
+
+void interpreter::interpret(std::vector<stmt> const& stmts) {
+  visitor visitor{env, output_};
+  interpret_stmts(visitor, stmts);
 }
 
 // Implements interpret_func
-auto interpreter::interpret(callable callable, env_ptr env_ptr) -> value {
+auto visitor::interpret(callable callable, env_ptr const& env_ptr) -> value {
   try {
-    std::shared_ptr<environment> nested_env =
-        std::make_shared<environment>(env_ptr.get());
+    auto scope = std::make_shared<environment>(env_ptr.get());
 
     for (int i = 0; i < std::ssize(callable.params); ++i) {
-      nested_env->define(callable.params[i].lexeme, callable.args[i]);
+      scope->define(callable.params[i].lexeme, callable.args[i]);
     }
 
-    lox::interpreter updated{nested_env, output};
-    lox::interpret(updated, callable.body);
-  } catch (const return_exception& e) { return e.value; }
+    visitor visitor{scope, output};
+    interpret_stmts(visitor, callable.body);
+  } catch (return_exception const& e) { return e.value; }
 
   return {};
 }

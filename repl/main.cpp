@@ -22,7 +22,7 @@
 static auto run(lox::interpreter& interpreter, std::string const& source)
     -> int {
   lox::scanner scanner(source);
-  const auto   tokens = scanner.scan();
+  auto const   tokens = scanner.scan();
   fmt::print("=== Printing tokens ===\n[{}]\n", fmt::join(tokens, ", "));
 
   // Stop if there was an error
@@ -30,12 +30,12 @@ static auto run(lox::interpreter& interpreter, std::string const& source)
   if (lox::errors::runtime_errored) return EX_SOFTWARE;
 
   lox::parser parser(tokens);
-  const auto  stmts = parser.parse();
+  auto const  stmts = parser.parse();
   fmt::print("=== Printing AST ===\n{}\n",
              fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
 
   fmt::print("=== Evaluating AST ===\n");
-  lox::interpret(interpreter, stmts);
+  interpreter.interpret(stmts);
 
   return EX_OK;
 }

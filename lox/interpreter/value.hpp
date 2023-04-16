@@ -17,12 +17,12 @@ namespace lox {
 // literal has been flattened out here.
 // TODO: Simplify this into just one literal variant
 using value = std::variant<std::monostate, bool, double, std::string,
-                           box<struct function>>;
+                           box<struct function>, box<struct builtin>>;
 
 struct callable {
-  const std::vector<token>& params;
-  const std::vector<value>& args;
-  const std::vector<stmt>&  body;
+  std::vector<token> const& params;
+  std::vector<value> const& args;
+  std::vector<stmt> const&  body;
 };
 
 using env_ptr = std::shared_ptr<class environment>;
@@ -34,12 +34,22 @@ struct function {
   env_ptr       enclosing;
 
   [[nodiscard]] auto call(interpret_func const&     fn,
-                          const std::vector<value>& args) const -> value {
+                          std::vector<value> const& args) const -> value {
     return fn(callable{decl.params, args, decl.body}, enclosing);
   }
 
-  friend auto operator==(const function& a, const function& b) -> bool {
+  friend auto operator==(function const& a, function const& b) -> bool {
     return a.decl.name.lexeme == b.decl.name.lexeme;
+  }
+};
+
+struct builtin {
+  std::string                              name;
+  int                                      arity;
+  std::function<value(std::vector<value>)> fn;
+
+  friend auto operator==(builtin const& a, builtin const& b) -> bool {
+    return a.name == b.name;
   }
 };
 
@@ -72,7 +82,7 @@ auto multiply(token token, value left, value right) -> number_or_string;
 auto divide(token token, value left, value right) -> double;
 
 // Function call
-auto call(token paren, value callee, const std::vector<value>& args,
+auto call(token paren, value callee, std::vector<value> const& args,
           interpret_func fn) -> value;
 auto arity(token paren, value callee) -> int;
 
