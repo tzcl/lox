@@ -38,6 +38,18 @@ TEST_CASE("interpreter") {
     input = R"(min("a", "b");)";
     want  = "a\n";
   }
+  SUBCASE("static scope") {
+    input = read_file("interpreter/scopes.lox");
+    want  = "global\nglobal\n";
+  }
+  SUBCASE("redeclare var") {
+    input = R"(fun bad() { var a = "first"; var a = "second"; })";
+    want  = "error!\n";
+  }
+  SUBCASE("top level return") {
+    input = R"(return "at top level";)";
+    want  = "error!\n";
+  }
 
   lox::scanner scanner{input};
   lox::parser  parser{scanner.scan()};

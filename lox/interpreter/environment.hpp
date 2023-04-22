@@ -3,17 +3,19 @@
 #include <lox/interpreter/value.hpp>
 #include <lox/token/token.hpp>
 
+#include <fmt/format.h>
+
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
-
-#include <fmt/format.h>
 
 namespace lox {
 
 class environment {
 public:
-  explicit environment(environment* parent = nullptr) : parent_(parent) {}
+  explicit environment(std::shared_ptr<environment> parent = nullptr)
+      : parent_(std::move(parent)) {}
 
   void define(std::string name, value value) {
     values_[name] = std::move(value);
@@ -24,8 +26,7 @@ public:
   auto get(int dist, token name) -> value;
 
   // private:
-  // Use a raw pointer because we want a non-owning pointer that may be null.
-  environment* parent_;
+  std::shared_ptr<environment> parent_;
 
   std::unordered_map<std::string, value> values_;
 

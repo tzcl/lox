@@ -46,14 +46,14 @@ public:
   void assign_var(token name, expr ex, value value);
 
 private:
-  environment   globals_;
-  environment&  env_;
+  env_ptr       globals_;
+  env_ptr       env_;
   std::ostream& output_;
 
   std::unordered_map<std::string, int> locals{};
 
   // TODO: This feels hacky
-  auto interpret(callable callable, env_ptr const& env_ptr) -> value;
+  auto interpret(callable callable, env_ptr const& closure) -> value;
 };
 
 } // namespace lox

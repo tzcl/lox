@@ -9,7 +9,7 @@ namespace lox {
 
 auto environment::ancestor(int dist) -> environment& {
   environment* env = this;
-  for (int i = 0; i < dist; ++i) { env = env->parent_; }
+  for (int i = 0; i < dist; ++i) { env = env->parent_.get(); }
 
   return *env;
 }

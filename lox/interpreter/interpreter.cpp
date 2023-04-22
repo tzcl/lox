@@ -15,14 +15,15 @@
 namespace lox {
 
 interpreter::interpreter(std::ostream& output)
-    : globals_{environment{}}, env_{globals_}, output_(output) {
-  globals_.define("pi", 3.14);
-  globals_.define("min", builtin{"min", 2, [](std::vector<value> args) {
-                                   return values::less_equal(token{}, args[0],
-                                                             args[1])
-                                            ? args[0]
-                                            : args[1];
-                                 }});
+    : globals_{std::make_shared<environment>()}, env_{globals_},
+      output_(output) {
+  globals_->define("pi", 3.14);
+  globals_->define("min", builtin{"min", 2, [](std::vector<value> args) {
+                                    return values::less_equal(token{}, args[0],
+                                                              args[1])
+                                             ? args[0]
+                                             : args[1];
+                                  }});
 }
 
 struct break_exception final : public std::exception {
@@ -50,16 +51,16 @@ static auto hash_expr(expr ex) -> std::string {
 auto interpreter::lookup_var(token name, expr ex) -> value {
   auto hash = hash_expr(std::move(ex));
   if (locals.contains(hash)) {
-    return env_.get(locals[hash], name);
+    return env_->get(locals[hash], name);
   } else {
-    return globals_.get(name);
+    return globals_->get(name);
   }
 }
 
 void interpreter::assign_var(token name, expr ex, value value) {
   auto hash = hash_expr(std::move(ex));
-  if (locals.contains(hash)) env_.assign(locals[hash], name, value);
-  else globals_.assign(name, value);
+  if (locals.contains(hash)) env_->assign(locals[hash], name, value);
+  else globals_->assign(name, value);
 }
 
 auto interpreter::operator()(literal_expr const& e) -> value {
@@ -185,22 +186,32 @@ void interpreter::operator()(variable_stmt const& s) {
   value value;
   if (s.init) value = std::visit(*this, *s.init);
 
-  env_.define(s.name.lexeme, value);
+  env_->define(s.name.lexeme, value);
 }
 
 void interpreter::operator()(box<block_stmt> const& s) {
-  environment prev = env_;
-  env_             = environment{&prev};
+  env_ptr prev = env_; // points to the same thing as env_
+  fmt::print("making new scope\n");
+  fmt::print("prev env: {}\n", prev->values_);
+  if (prev->parent_)
+    fmt::print("prev parent hmmm {}\n", prev->parent_->values_);
+  if (env_->parent_)
+    fmt::print("env: {}, parent: {}\n", env_->values_, env_->parent_->values_);
+  else fmt::print("env: {}\n", env_->values_);
+  env_ = std::make_shared<environment>(prev);
   for (auto const& ss : s->stmts) { std::visit(*this, ss); }
   // TODO: This isn't exception-safe
+  fmt::print("resetting scope\n");
+  fmt::print("prev env: {}\n", prev->values_);
+  fmt::print("env: {}\n", env_->values_);
+  fmt::print("env: {}, parent: {}\n", env_->values_, env_->parent_->values_);
   env_ = prev;
 }
 
 void interpreter::operator()(box<function_stmt> const& s) {
-  // TODO: This probably dangles
-  function fn{*s, std::make_shared<environment>(env_)};
-  // TODO: Function can't refer to itself
-  env_.define(s->name.lexeme, fn);
+  function fn{*s, env_};
+  env_->define(s->name.lexeme, fn);
+  fmt::print("defined new fn: {}\n", s->name.lexeme);
 }
 
 [[noreturn]] void interpreter::operator()(break_stmt const& /*s*/) {
@@ -247,17 +258,16 @@ void interpreter::interpret(std::vector<stmt> const& stmts) {
 }
 
 // Implements interpret_func
-auto interpreter::interpret(callable callable, env_ptr const& env_ptr)
+auto interpreter::interpret(callable callable, env_ptr const& closure)
     -> value {
-  environment prev = env_;
+  env_ptr prev = env_;
   try {
-    environment env{env_ptr.get()};
+    env_ = std::make_shared<environment>(closure);
 
     for (int i = 0; i < std::ssize(callable.params); ++i) {
-      env.define(callable.params[i].lexeme, callable.args[i]);
+      env_->define(callable.params[i].lexeme, callable.args[i]);
     }
 
-    env_ = env;
     interpret(callable.body);
   } catch (return_exception const& e) {
     env_ = prev;
