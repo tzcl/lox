@@ -8,7 +8,7 @@
 
 namespace lox {
 
-const int MAX_ARGS = 255;
+int const MAX_ARGS = 255;
 
 using enum token_type;
 
@@ -139,8 +139,10 @@ auto parser::for_statement() -> stmt {
 
     return body;
   } catch (std::exception& e) {
+    // TODO: Any for loop missing } crashes
     // Catch and rethrow to ensure loop depth gets decremented
     --loop_depth_;
+    // There's nothing that catches this...
     throw e;
   }
 }

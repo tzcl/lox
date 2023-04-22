@@ -3,6 +3,7 @@
 #include <lox/interpreter/environment.hpp>
 #include <lox/interpreter/interpreter.hpp>
 #include <lox/parser/parser.hpp>
+#include <lox/resolver/resolver.hpp>
 #include <lox/scanner/scanner.hpp>
 #include <lox/token/token.hpp>
 
@@ -33,6 +34,9 @@ static auto run(lox::interpreter& interpreter, std::string const& source)
   auto const  stmts = parser.parse();
   fmt::print("=== Printing AST ===\n{}\n",
              fmt::join(lox::print(lox::ast_printer{}, stmts), "\n"));
+
+  lox::resolver resolver{interpreter};
+  resolver.resolve(stmts);
 
   fmt::print("=== Evaluating AST ===\n");
   interpreter.interpret(stmts);

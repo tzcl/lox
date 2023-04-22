@@ -19,13 +19,17 @@ public:
     values_[name] = std::move(value);
   }
   void assign(token name, value value);
+  void assign(int dist, token name, value value);
   auto get(token name) -> value;
+  auto get(int dist, token name) -> value;
 
-private:
+  // private:
   // Use a raw pointer because we want a non-owning pointer that may be null.
   environment* parent_;
 
   std::unordered_map<std::string, value> values_;
+
+  auto ancestor(int dist) -> environment&;
 };
 
 } // namespace lox
