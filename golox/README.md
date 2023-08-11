@@ -1,6 +1,1 @@
-# Lox implementations
-
-| Language | Implementation |
-| -------- | -------------- |
-| Go       | `/golox`       |
-| C++20    | `/cpplox`      |
+# Lox in Go
