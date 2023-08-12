@@ -6,6 +6,12 @@ import (
 	"os"
 )
 
+/* NOTES
+
+What I really want is to do all the dependency injection here and then have
+most of the logic running in packages.
+*/
+
 func main() {
 	args := os.Args[1:]
 
@@ -20,7 +26,7 @@ func main() {
 	}
 }
 
-// TODO: Move this logic to its own package
+// TODO: Move this logic to its own package?
 func runFile(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
