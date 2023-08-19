@@ -1,7 +1,8 @@
-package token
+package ltoken
 
 import "fmt"
 
+//go:generate stringer -type=Type
 type Type int
 
 const (
@@ -58,10 +59,18 @@ type Token struct {
 	Type    Type
 	Lexeme  string
 	Literal any // TODO: How to represent this?
-	Lint    int
+	Line    int
 }
 
 func (t Token) String() string {
-	// TODO: Literal...
-	return fmt.Sprintf("%d %s", t.Type, t.Lexeme) /* + " " + string(t.Literal) */
+	switch t.Type {
+	case EOF:
+		return "EOF"
+	case String:
+		return fmt.Sprintf(`%d: %s %q`, t.Line, t.Type, t.Literal)
+	case Identifier, Number:
+		return fmt.Sprintf(`%d: %s %v`, t.Line, t.Type, t.Literal)
+	default:
+		return fmt.Sprintf(`%d: %s`, t.Line, t.Type)
+	}
 }

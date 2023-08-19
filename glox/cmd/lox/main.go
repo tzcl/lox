@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	"github.com/tzcl/lox/glox/internal/lscanner"
 )
 
 /* NOTES
@@ -53,5 +55,8 @@ func runPrompt() error {
 }
 
 func run(src string) {
-	fmt.Println(src)
+	scanner := lscanner.New(src)
+	for _, token := range scanner.Scan() {
+		fmt.Println(token)
+	}
 }
