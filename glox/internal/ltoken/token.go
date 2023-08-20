@@ -55,6 +55,33 @@ const (
 	EOF
 )
 
+var keywords = map[string]Type{
+	"and":    And,
+	"class":  Class,
+	"else":   Else,
+	"false":  False,
+	"for":    For,
+	"fun":    Fun,
+	"if":     If,
+	"nil":    Nil,
+	"or":     Or,
+	"print":  Print,
+	"return": Return,
+	"super":  Super,
+	"this":   This,
+	"true":   True,
+	"var":    Var,
+	"while":  While,
+}
+
+func LookupKeyword(identifier string) Type {
+	ttype, ok := keywords[identifier]
+	if !ok {
+		return Identifier
+	}
+	return ttype
+}
+
 type Token struct {
 	Type    Type
 	Lexeme  string
@@ -67,10 +94,10 @@ func (t Token) String() string {
 	case EOF:
 		return "EOF"
 	case String:
-		return fmt.Sprintf(`%d: %s %q`, t.Line, t.Type, t.Literal)
+		return fmt.Sprintf("%s(%q)", t.Type, t.Literal)
 	case Identifier, Number:
-		return fmt.Sprintf(`%d: %s %v`, t.Line, t.Type, t.Literal)
+		return fmt.Sprintf("%s(%v)", t.Type, t.Literal)
 	default:
-		return fmt.Sprintf(`%d: %s`, t.Line, t.Type)
+		return fmt.Sprintf("%s", t.Type)
 	}
 }

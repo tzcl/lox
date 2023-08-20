@@ -1,11 +1,21 @@
 package lscanner
 
 import (
+	"fmt"
 	"strconv"
 	"unicode"
 
 	"github.com/tzcl/lox/glox/internal/ltoken"
 )
+
+type ScannerError struct {
+	line    int
+	message string
+}
+
+func (e *ScannerError) Error() string {
+	return fmt.Sprintf("[line %d]: Error: %s", e.line, e.message)
+}
 
 type Scanner struct {
 	// Storing the source as a slice of runes allows us to handle Unicode
@@ -19,21 +29,22 @@ type Scanner struct {
 	tokens []ltoken.Token
 }
 
-// TODO: Error reporter?
 func New(source string) *Scanner {
 	return &Scanner{source: []rune(source), line: 1}
 }
 
-func (s *Scanner) Scan() []ltoken.Token {
+func (s *Scanner) Scan() ([]ltoken.Token, error) {
 	for !s.done() {
-		s.scanToken()
+		if err := s.scanToken(); err != nil {
+			return nil, err
+		}
 	}
 
 	s.tokens = append(s.tokens, ltoken.Token{Type: ltoken.EOF, Line: s.line})
-	return s.tokens
+	return s.tokens, nil
 }
 
-func (s *Scanner) scanToken() {
+func (s *Scanner) scanToken() error {
 	s.start = s.curr
 
 	switch r := s.next(); r {
@@ -97,24 +108,25 @@ func (s *Scanner) scanToken() {
 		s.line++
 
 	case '"':
-		s.string()
+		if err := s.string(); err != nil {
+			return err
+		}
 
 	default:
-			switch {
-				case unicode.IsDigit(r):
-				s.number()
-				case unicode.IsLetter(r):
-				s.identifier()
-			}
-		if unicode.IsDigit(r) {
+		switch {
+		case unicode.IsDigit(r):
 			s.number()
-		} else {
-			panic("unexpected charcter")
+		case isLetter(r):
+			s.identifier()
+		default:
+			return s.error("unexpected character")
 		}
 	}
+
+	return nil
 }
 
-func (s *Scanner) string() {
+func (s *Scanner) string() error {
 	// Find end of string
 	for s.peek() != '"' && !s.done() {
 		if s.peek() == '\n' {
@@ -124,7 +136,7 @@ func (s *Scanner) string() {
 	}
 
 	if s.done() {
-		panic("unterminated string")
+		return s.error("unterminated string")
 	}
 
 	// The closing "
@@ -133,6 +145,8 @@ func (s *Scanner) string() {
 	// Trim the surrounding quotes
 	value := string(s.source[s.start+1 : s.curr-1])
 	s.addToken(ltoken.String, value)
+
+	return nil
 }
 
 func (s *Scanner) number() {
@@ -159,7 +173,13 @@ func (s *Scanner) number() {
 
 func (s *Scanner) identifier() {
 	// Find end of identifier
-	for unicode.IsLetter() || unicode.Is
+	for r := s.peek(); isLetter(r) || unicode.IsDigit(r); r = s.peek() {
+		s.next()
+	}
+
+	ident := string(s.source[s.start:s.curr])
+	ttype := ltoken.LookupKeyword(ident)
+	s.addToken(ttype, ident)
 }
 
 func (s *Scanner) done() bool {
@@ -205,6 +225,10 @@ func (s *Scanner) addToken(ttype ltoken.Type, literal any) {
 	lexeme := string(s.source[s.start:s.curr])
 	token := ltoken.Token{Type: ttype, Lexeme: lexeme, Literal: literal, Line: s.line}
 	s.tokens = append(s.tokens, token)
+}
+
+func (s *Scanner) error(message string) error {
+	return &ScannerError{line: s.line, message: message}
 }
 
 // A letter can be a unicode letter or "_"

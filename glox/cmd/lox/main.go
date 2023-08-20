@@ -8,12 +8,6 @@ import (
 	"github.com/tzcl/lox/glox/internal/lscanner"
 )
 
-/* NOTES
-
-What I really want is to do all the dependency injection here and then have
-most of the logic running in packages.
-*/
-
 func main() {
 	args := os.Args[1:]
 
@@ -28,18 +22,19 @@ func main() {
 	}
 }
 
-// TODO: Move this logic to its own package?
-func runFile(path string) error {
+func runFile(path string) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return err
+		fmt.Println(err)
+		return
 	}
 
-	run(string(data))
-	return nil
+	if err := run(string(data)); err != nil {
+		fmt.Println(err)
+	}
 }
 
-func runPrompt() error {
+func runPrompt() {
 	reader := bufio.NewScanner(os.Stdin)
 
 	for {
@@ -47,16 +42,24 @@ func runPrompt() error {
 		if ok := reader.Scan(); !ok {
 			break
 		}
-		line := reader.Text()
-		run(line)
-	}
 
-	return nil
+		line := reader.Text()
+
+		if err := run(line); err != nil {
+			fmt.Println(err)
+		}
+	}
 }
 
-func run(src string) {
+func run(src string) error {
 	scanner := lscanner.New(src)
-	for _, token := range scanner.Scan() {
-		fmt.Println(token)
+
+	tokens, err := scanner.Scan()
+	if err != nil {
+		return err
 	}
+
+	fmt.Println(tokens)
+
+	return nil
 }
