@@ -1,3 +1,0 @@
-[[language]]
-name = "go"
-config = { "formatting.local" = "github.com/tzcl/lox" }
