@@ -48,6 +48,7 @@ func (s *Scanner) scanToken() error {
 	s.start = s.curr
 
 	switch r := s.next(); r {
+	// Single-character tokens
 	case '(':
 		s.addToken(ltoken.LeftParen, nil)
 	case ')':
@@ -69,6 +70,7 @@ func (s *Scanner) scanToken() error {
 	case '*':
 		s.addToken(ltoken.Star, nil)
 
+	// Double-character tokens
 	case '!':
 		ttype := ltoken.Bang
 		if s.match('=') {
@@ -103,15 +105,18 @@ func (s *Scanner) scanToken() error {
 			s.addToken(ltoken.Slash, nil)
 		}
 
+	// Ignore whitespace
 	case ' ', '\r', '\t':
 	case '\n':
 		s.line++
 
+	// Parse string
 	case '"':
 		if err := s.string(); err != nil {
 			return err
 		}
 
+	// Parse more complex tokens
 	default:
 		switch {
 		case unicode.IsDigit(r):

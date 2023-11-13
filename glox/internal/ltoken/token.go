@@ -2,7 +2,7 @@ package ltoken
 
 import "fmt"
 
-//go:generate stringer -type=Type
+//go:generate stringer -type=Type -linecomment
 type Type int
 
 const (
@@ -35,57 +35,49 @@ const (
 	Number
 
 	// Keywords
-	And
-	Class
-	Else
-	False
-	Fun
-	For
-	If
-	Nil
-	Or
-	Print
-	Return
-	Super
-	This
-	True
-	Var
-	While
+	keywordStart
+	And    // and
+	Class  // class
+	Else   // else
+	False  // false
+	Fun    // fun
+	For    // for
+	If     // if
+	Nil    // nil
+	Or     // or
+	Print  // print
+	Return // return
+	Super  // super
+	This   // this
+	True   // true
+	Var    // var
+	While  // while
+	keywordEnd
 
 	EOF
+	numTokens
 )
 
-var keywords = map[string]Type{
-	"and":    And,
-	"class":  Class,
-	"else":   Else,
-	"false":  False,
-	"for":    For,
-	"fun":    Fun,
-	"if":     If,
-	"nil":    Nil,
-	"or":     Or,
-	"print":  Print,
-	"return": Return,
-	"super":  Super,
-	"this":   This,
-	"true":   True,
-	"var":    Var,
-	"while":  While,
+var keywords = map[string]Type{}
+
+func init() {
+	// Initialise keywords
+	for i := keywordStart + 1; i < keywordEnd; i++ {
+		keywords[i.String()] = i
+	}
 }
 
 func LookupKeyword(identifier string) Type {
-	ttype, ok := keywords[identifier]
-	if !ok {
-		return Identifier
+	if ttype, ok := keywords[identifier]; ok {
+		return ttype
 	}
-	return ttype
+	return Identifier
 }
 
 type Token struct {
 	Type    Type
 	Lexeme  string
-	Literal any // TODO: How to represent this?
+	Literal any
 	Line    int
 }
 

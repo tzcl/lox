@@ -13,6 +13,22 @@ func TestScan(t *testing.T) {
 		source string
 		expect autogold.Value
 	}{
+		"RightBrace": {
+			source: "}",
+			expect: autogold.Expect("[RightBrace EOF]"),
+		},
+		"BangEqual": {
+			source: "!=",
+			expect: autogold.Expect("[BangEqual EOF]"),
+		},
+		"String": {
+			source: `"string"`,
+			expect: autogold.Expect(`[String("string") EOF]`),
+		},
+		"Number": {
+			source: "4.123",
+			expect: autogold.Expect("[Number(4.123) EOF]"),
+		},
 		"Identifier": {
 			source: "test",
 			expect: autogold.Expect("[Identifier(test) EOF]"),
