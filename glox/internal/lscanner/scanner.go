@@ -67,8 +67,6 @@ func (s *Scanner) scanToken() error {
 		s.addToken(ltoken.Plus, nil)
 	case ';':
 		s.addToken(ltoken.Semicolon, nil)
-	case '*':
-		s.addToken(ltoken.Star, nil)
 
 	// Double-character tokens
 	case '!':
@@ -96,14 +94,25 @@ func (s *Scanner) scanToken() error {
 		}
 		s.addToken(ttype, nil)
 	case '/':
-		if s.match('/') {
-			// Consume comment
+		switch n := s.peek(); n {
+		case '/':
+			s.next() // Consume the '/'
 			for s.peek() != '\n' && !s.done() {
 				s.next()
 			}
-		} else {
+		case '*':
+			s.next() // Consume the '*'
+			if err := s.blockComment(); err != nil {
+				return err
+			}
+		default:
 			s.addToken(ltoken.Slash, nil)
 		}
+	case '*':
+		if s.peek() == '/' {
+			return s.error("found block comment without matching /*")
+		}
+		s.addToken(ltoken.Star, nil)
 
 	// Ignore whitespace
 	case ' ', '\r', '\t':
@@ -122,7 +131,9 @@ func (s *Scanner) scanToken() error {
 		case unicode.IsDigit(r):
 			s.number()
 		case isLetter(r):
-			s.identifier()
+			if err := s.identifier(); err != nil {
+				return err
+			}
 		default:
 			return s.error("unexpected character")
 		}
@@ -141,7 +152,7 @@ func (s *Scanner) string() error {
 	}
 
 	if s.done() {
-		return s.error("unterminated string")
+		return s.error("unterminated string: " + string(s.source[s.start:s.curr]))
 	}
 
 	// The closing "
@@ -176,15 +187,43 @@ func (s *Scanner) number() {
 	s.addToken(ltoken.Number, value)
 }
 
-func (s *Scanner) identifier() {
+func (s *Scanner) identifier() error {
 	// Find end of identifier
 	for r := s.peek(); isLetter(r) || unicode.IsDigit(r); r = s.peek() {
 		s.next()
 	}
 
+	if s.match('"') {
+		return s.error(`string missing opening quote: ` + string(s.source[s.start:s.curr]))
+	}
+
 	ident := string(s.source[s.start:s.curr])
 	ttype := ltoken.LookupKeyword(ident)
 	s.addToken(ttype, ident)
+
+	return nil
+}
+
+func (s *Scanner) blockComment() error {
+	var depth int
+
+	for !s.done() {
+		switch {
+		case s.match('/') && s.match('*'):
+			depth++
+		case s.match('*') && s.match('/'):
+			depth--
+			if depth < 0 {
+				return nil
+			}
+		case s.match('\n'):
+			s.line++
+		default:
+			s.next()
+		}
+	}
+
+	return s.error("unterminated block comment")
 }
 
 func (s *Scanner) done() bool {
