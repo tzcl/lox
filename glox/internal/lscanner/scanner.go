@@ -152,8 +152,7 @@ func (s *Scanner) string() error {
 	}
 
 	if s.done() {
-		lexeme := string(s.source[s.start:s.curr])
-		return s.error("unterminated string: " + lexeme)
+		return s.error("unterminated string: " + string(s.source[s.start:s.curr]))
 	}
 
 	// The closing "
