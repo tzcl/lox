@@ -9,6 +9,18 @@ import (
 	"github.com/tzcl/lox/glox/internal/token"
 )
 
+type ParserError struct {
+	token   token.Token
+	message string
+}
+
+func (e *ParserError) Error() string {
+	if e.token.Type == token.EOF {
+		return fmt.Sprintf("[line %d]: Error at end: %s", e.token.Line, e.message)
+	}
+	return fmt.Sprintf("[line %d]: Error at '%s': %s", e.token.Line, e.token.Lexeme, e.message)
+}
+
 type Parser struct {
 	tokens []token.Token
 	curr   int
@@ -18,12 +30,15 @@ func New(tokens []token.Token) *Parser {
 	return &Parser{tokens: tokens}
 }
 
-func (p *Parser) Parse() (ast.Expr, error) {
+func (p *Parser) Parse() (expr ast.Expr, err error) {
 	defer func() {
-		// if r := recover(); r != nil {
-		// TODO: What do we need to do here?
-
-		// }
+		if r := recover(); r != nil {
+			if e, ok := r.(*ParserError); ok {
+				err = e
+			} else {
+				panic(r)
+			}
+		}
 	}()
 
 	return p.expression(), nil
@@ -128,14 +143,14 @@ func (p *Parser) primary() ast.Expr {
 		number, err := strconv.ParseFloat(n.Lexeme, 64)
 		if err != nil {
 			// Should be unreachable
-			panic("couldn't parse number: " + err.Error())
+			panic(err)
 		}
 		return ast.NewLiteralExpr(number)
 	case token.String:
 		return ast.NewLiteralExpr(n.Lexeme)
 	case token.LeftParen:
 		expr := p.expression()
-		p.consume(token.RightParen, "expect ')' after expression")
+		p.consume(token.RightParen, "expected ')' after expression")
 		return ast.GroupingExpr{Expr: expr}
 	default:
 		panic(fmt.Sprint("unknown token ", n))
@@ -143,18 +158,36 @@ func (p *Parser) primary() ast.Expr {
 }
 
 func (p *Parser) consume(ttype token.Type, message string) token.Token {
-	for !p.done() {
-		if p.check(ttype) {
-			return p.next()
-		}
+	if p.check(ttype) {
+		return p.next()
 	}
 
-	panic(message)
+	panic(&ParserError{p.peek(), message})
 }
 
-// func (p *Parser) synchronise() {
-// TODO: implement
-// }
+func (p *Parser) synchronise() {
+	p.next()
+
+	for !p.done() {
+		if p.prev().Type == token.Semicolon {
+			return
+		}
+
+		switch p.peek().Type {
+		case token.Class,
+			token.Fun,
+			token.Var,
+			token.For,
+			token.If,
+			token.While,
+			token.Print,
+			token.Return:
+			return
+		}
+
+		p.next()
+	}
+}
 
 func (p *Parser) match(types ...token.Type) bool {
 	for _, ttype := range types {

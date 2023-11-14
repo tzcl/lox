@@ -266,7 +266,7 @@ func (s *Scanner) peekNext() rune {
 }
 
 func (s *Scanner) addToken(ttype token.Type) {
-	s.addTokenWithLexeme(ttype, "")
+	s.addTokenWithLexeme(ttype, string(s.source[s.start:s.curr]))
 }
 
 func (s *Scanner) addTokenWithLexeme(ttype token.Type, lexeme string) {
