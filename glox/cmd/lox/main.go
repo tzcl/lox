@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tzcl/lox/glox/internal/lscanner"
+	"github.com/tzcl/lox/glox/internal/scanner"
 )
 
 func main() {
@@ -52,7 +52,7 @@ func runPrompt() {
 }
 
 func run(src string) error {
-	scanner := lscanner.New(src)
+	scanner := scanner.New(src)
 
 	tokens, err := scanner.Scan()
 	if err != nil {

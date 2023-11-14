@@ -1,6 +1,6 @@
-package last
+package ast
 
-import "github.com/tzcl/lox/glox/internal/ltoken"
+import "github.com/tzcl/lox/glox/internal/token"
 
 //sumtype:decl
 type Expr interface {
@@ -15,14 +15,14 @@ func (LiteralExpr) expr() {}
 
 type UnaryExpr struct {
 	Expr     Expr
-	Operator ltoken.Token
+	Operator token.Token
 }
 
 func (UnaryExpr) expr() {}
 
 type BinaryExpr struct {
 	Left, Right Expr
-	Operator    ltoken.Token
+	Operator    token.Token
 }
 
 func (BinaryExpr) expr() {}

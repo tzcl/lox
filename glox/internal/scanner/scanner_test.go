@@ -1,13 +1,14 @@
-package lscanner_test
+package scanner_test
 
 import (
 	"fmt"
-	"github.com/hexops/autogold/v2"
 	"strings"
 	"testing"
 
-	"github.com/tzcl/lox/glox/internal/lscanner"
-	"github.com/tzcl/lox/glox/internal/ltoken"
+	"github.com/hexops/autogold/v2"
+
+	"github.com/tzcl/lox/glox/internal/scanner"
+	"github.com/tzcl/lox/glox/internal/token"
 )
 
 func TestScan(t *testing.T) {
@@ -61,7 +62,7 @@ func TestScan(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			scanner := lscanner.New(test.source)
+			scanner := scanner.New(test.source)
 			tokens, err := scanner.Scan()
 			if err != nil {
 				t.Fatal("failed to scan text")
@@ -106,7 +107,7 @@ bnm,`),
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			scanner := lscanner.New(test.source)
+			scanner := scanner.New(test.source)
 			tokens, err := scanner.Scan()
 			t.Log(tokens)
 			if err == nil {
@@ -117,7 +118,7 @@ bnm,`),
 	}
 }
 
-func formatTokens(tokens []ltoken.Token) string {
+func formatTokens(tokens []token.Token) string {
 	var builder strings.Builder
 	for i, token := range tokens {
 		if i > 0 {

@@ -1,4 +1,4 @@
-package ltoken
+package token
 
 import "fmt"
 

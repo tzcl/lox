@@ -1,4 +1,4 @@
-package last
+package ast
 
 import (
 	"fmt"
