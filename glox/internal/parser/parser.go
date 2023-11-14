@@ -165,7 +165,7 @@ func (p *Parser) consume(ttype token.Type, message string) token.Token {
 	panic(&ParserError{p.peek(), message})
 }
 
-func (p *Parser) synchronise() {
+func (p *Parser) Synchronise() {
 	p.next()
 
 	for !p.done() {

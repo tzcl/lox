@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/hexops/autogold/v2"
+
 	"github.com/tzcl/lox/glox/internal/ast"
 	"github.com/tzcl/lox/glox/internal/parser"
 	"github.com/tzcl/lox/glox/internal/scanner"
