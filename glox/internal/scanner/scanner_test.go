@@ -65,7 +65,7 @@ func TestScan(t *testing.T) {
 			scanner := scanner.New(test.source)
 			tokens, err := scanner.Scan()
 			if err != nil {
-				t.Fatal("failed to scan text")
+				t.Fatal("failed to scan text: ", err)
 			}
 			test.expect.Equal(t, formatTokens(tokens))
 		})
@@ -111,7 +111,7 @@ bnm,`),
 			tokens, err := scanner.Scan()
 			t.Log(tokens)
 			if err == nil {
-				t.Fatal("expected error")
+				t.Fatal("expected an error")
 			}
 			test.expect.Equal(t, err.Error())
 		})
