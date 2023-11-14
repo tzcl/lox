@@ -1,11 +1,11 @@
-package lscanner
+package scanner
 
 import (
 	"fmt"
 	"strconv"
 	"unicode"
 
-	"github.com/tzcl/lox/glox/internal/ltoken"
+	"github.com/tzcl/lox/glox/internal/token"
 )
 
 type ScannerError struct {
@@ -26,21 +26,21 @@ type Scanner struct {
 	curr  int
 	line  int
 
-	tokens []ltoken.Token
+	tokens []token.Token
 }
 
 func New(source string) *Scanner {
 	return &Scanner{source: []rune(source), line: 1}
 }
 
-func (s *Scanner) Scan() ([]ltoken.Token, error) {
+func (s *Scanner) Scan() ([]token.Token, error) {
 	for !s.done() {
 		if err := s.scanToken(); err != nil {
 			return nil, err
 		}
 	}
 
-	s.tokens = append(s.tokens, ltoken.Token{Type: ltoken.EOF, Line: s.line})
+	s.tokens = append(s.tokens, token.Token{Type: token.EOF, Line: s.line})
 	return s.tokens, nil
 }
 
@@ -50,47 +50,47 @@ func (s *Scanner) scanToken() error {
 	switch r := s.next(); r {
 	// Single-character tokens
 	case '(':
-		s.addToken(ltoken.LeftParen, nil)
+		s.addToken(token.LeftParen, nil)
 	case ')':
-		s.addToken(ltoken.RightParen, nil)
+		s.addToken(token.RightParen, nil)
 	case '{':
-		s.addToken(ltoken.LeftBrace, nil)
+		s.addToken(token.LeftBrace, nil)
 	case '}':
-		s.addToken(ltoken.RightBrace, nil)
+		s.addToken(token.RightBrace, nil)
 	case ',':
-		s.addToken(ltoken.Comma, nil)
+		s.addToken(token.Comma, nil)
 	case '.':
-		s.addToken(ltoken.Dot, nil)
+		s.addToken(token.Dot, nil)
 	case '-':
-		s.addToken(ltoken.Minus, nil)
+		s.addToken(token.Minus, nil)
 	case '+':
-		s.addToken(ltoken.Plus, nil)
+		s.addToken(token.Plus, nil)
 	case ';':
-		s.addToken(ltoken.Semicolon, nil)
+		s.addToken(token.Semicolon, nil)
 
 	// Double-character tokens
 	case '!':
-		ttype := ltoken.Bang
+		ttype := token.Bang
 		if s.match('=') {
-			ttype = ltoken.BangEqual
+			ttype = token.BangEqual
 		}
 		s.addToken(ttype, nil)
 	case '=':
-		ttype := ltoken.Equal
+		ttype := token.Equal
 		if s.match('=') {
-			ttype = ltoken.EqualEqual
+			ttype = token.EqualEqual
 		}
 		s.addToken(ttype, nil)
 	case '<':
-		ttype := ltoken.Less
+		ttype := token.Less
 		if s.match('=') {
-			ttype = ltoken.LessEqual
+			ttype = token.LessEqual
 		}
 		s.addToken(ttype, nil)
 	case '>':
-		ttype := ltoken.Greater
+		ttype := token.Greater
 		if s.match('=') {
-			ttype = ltoken.GreaterEqual
+			ttype = token.GreaterEqual
 		}
 		s.addToken(ttype, nil)
 	case '/':
@@ -106,13 +106,13 @@ func (s *Scanner) scanToken() error {
 				return err
 			}
 		default:
-			s.addToken(ltoken.Slash, nil)
+			s.addToken(token.Slash, nil)
 		}
 	case '*':
 		if s.peek() == '/' {
 			return s.error("found block comment without matching /*")
 		}
-		s.addToken(ltoken.Star, nil)
+		s.addToken(token.Star, nil)
 
 	// Ignore whitespace
 	case ' ', '\r', '\t':
@@ -160,7 +160,7 @@ func (s *Scanner) string() error {
 
 	// Trim the surrounding quotes
 	value := string(s.source[s.start+1 : s.curr-1])
-	s.addToken(ltoken.String, value)
+	s.addToken(token.String, value)
 
 	return nil
 }
@@ -184,7 +184,7 @@ func (s *Scanner) number() {
 
 	// Ignore error because we've checked we have a valid float
 	value, _ := strconv.ParseFloat(string(s.source[s.start:s.curr]), 64)
-	s.addToken(ltoken.Number, value)
+	s.addToken(token.Number, value)
 }
 
 func (s *Scanner) identifier() error {
@@ -198,7 +198,7 @@ func (s *Scanner) identifier() error {
 	}
 
 	ident := string(s.source[s.start:s.curr])
-	ttype := ltoken.LookupKeyword(ident)
+	ttype := token.LookupKeyword(ident)
 	s.addToken(ttype, ident)
 
 	return nil
@@ -265,9 +265,9 @@ func (s *Scanner) peekNext() rune {
 	return s.source[s.curr+1]
 }
 
-func (s *Scanner) addToken(ttype ltoken.Type, literal any) {
+func (s *Scanner) addToken(ttype token.Type, literal any) {
 	lexeme := string(s.source[s.start:s.curr])
-	token := ltoken.Token{Type: ttype, Lexeme: lexeme, Literal: literal, Line: s.line}
+	token := token.Token{Type: ttype, Lexeme: lexeme, Literal: literal, Line: s.line}
 	s.tokens = append(s.tokens, token)
 }
 

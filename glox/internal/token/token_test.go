@@ -1,10 +1,11 @@
-package ltoken_test
+package token_test
 
 import (
 	"testing"
 
 	"github.com/hexops/autogold/v2"
-	"github.com/tzcl/lox/glox/internal/ltoken"
+
+	"github.com/tzcl/lox/glox/internal/token"
 )
 
 func TestLookupKeyword(t *testing.T) {
@@ -27,7 +28,7 @@ func TestLookupKeyword(t *testing.T) {
 		test := test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			got := ltoken.LookupKeyword(test.identifier)
+			got := token.LookupKeyword(test.identifier)
 			test.expect.Equal(t, got.String())
 		})
 	}
@@ -35,27 +36,27 @@ func TestLookupKeyword(t *testing.T) {
 
 func TestToken_String(t *testing.T) {
 	tests := map[string]struct {
-		token  ltoken.Token
+		token  token.Token
 		expect autogold.Value
 	}{
 		"EOF": {
-			token:  ltoken.Token{Type: ltoken.EOF},
+			token:  token.Token{Type: token.EOF},
 			expect: autogold.Expect("EOF"),
 		},
 		"String": {
-			token:  ltoken.Token{Type: ltoken.String, Literal: "hello world :D"},
+			token:  token.Token{Type: token.String, Literal: "hello world :D"},
 			expect: autogold.Expect(`String("hello world :D")`),
 		},
 		"Identifier": {
-			token:  ltoken.Token{Type: ltoken.Identifier, Literal: "_arst_123"},
+			token:  token.Token{Type: token.Identifier, Literal: "_arst_123"},
 			expect: autogold.Expect("Identifier(_arst_123)"),
 		},
 		"Number": {
-			token:  ltoken.Token{Type: ltoken.Number, Literal: 121.835},
+			token:  token.Token{Type: token.Number, Literal: 121.835},
 			expect: autogold.Expect("Number(121.835)"),
 		},
 		"RightBrace": {
-			token:  ltoken.Token{Type: ltoken.RightBrace},
+			token:  token.Token{Type: token.RightBrace},
 			expect: autogold.Expect("RightBrace"),
 		},
 	}

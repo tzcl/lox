@@ -1,4 +1,4 @@
-package ltoken
+package token
 
 import "fmt"
 
@@ -90,6 +90,6 @@ func (t Token) String() string {
 	case Identifier, Number:
 		return fmt.Sprintf("%s(%v)", t.Type, t.Literal)
 	default:
-		return fmt.Sprintf("%s", t.Type)
+		return t.Type.String()
 	}
 }
