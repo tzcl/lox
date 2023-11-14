@@ -6,5 +6,5 @@ tasks:
     - task: test
     
   lint: golangci-lint run --fix
-
   test: go test -race -count 10 ./...
+  run: rlwrap go run ./cmd/lox

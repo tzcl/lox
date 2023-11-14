@@ -10,7 +10,7 @@ func Print(expr Expr) string {
 
 	switch expr := expr.(type) {
 	case LiteralExpr:
-		builder.WriteString(fmt.Sprint(expr.Value))
+		builder.WriteString(expr.Literal.String())
 	case UnaryExpr:
 		builder.WriteString(fmt.Sprintf(
 			"(%s %s)",
@@ -29,6 +29,8 @@ func Print(expr Expr) string {
 			"(%s)",
 			Print(expr.Expr),
 		))
+	default:
+		panic(fmt.Sprintf("unknown expr %T", expr))
 	}
 
 	return builder.String()
@@ -39,7 +41,7 @@ func PrintRPN(expr Expr) string {
 
 	switch expr := expr.(type) {
 	case LiteralExpr:
-		builder.WriteString(fmt.Sprint(expr.Value))
+		builder.WriteString(expr.Literal.String())
 	case UnaryExpr:
 		builder.WriteString(fmt.Sprintf(
 			"%s %s",
@@ -55,6 +57,8 @@ func PrintRPN(expr Expr) string {
 		))
 	case GroupingExpr:
 		builder.WriteString(PrintRPN(expr.Expr))
+	default:
+		panic(fmt.Sprintf("unknown expr %T", expr))
 	}
 
 	return builder.String()
