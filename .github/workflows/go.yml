@@ -5,9 +5,10 @@ on:
     branches: 
       - main
     paths:
-      - glox/**.go
+      - .github/workflows/go.yml
       - go.mod
       - go.sum
+      - glox/**.go
 
 jobs:
 
