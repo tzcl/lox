@@ -28,6 +28,7 @@ jobs:
       with:
         version: v1.55.2
         working-directory: glox
+        skip-cache: true
   
   test:
     runs-on: ubuntu-latest
@@ -41,5 +42,5 @@ jobs:
         cache: false
 
     - name: test
-      run: go test -v ./...
+      run: go test -v ./... -race -count=10
       working-directory: glox
