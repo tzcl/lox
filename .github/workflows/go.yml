@@ -23,6 +23,7 @@ jobs:
 
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
+      working-directory: glox
       with:
         version: v1.55.2
   
