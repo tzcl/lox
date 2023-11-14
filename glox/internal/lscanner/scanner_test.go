@@ -2,10 +2,10 @@ package lscanner_test
 
 import (
 	"fmt"
+	"github.com/hexops/autogold/v2"
 	"strings"
 	"testing"
 
-	"github.com/hexops/autogold/v2"
 	"github.com/tzcl/lox/glox/internal/lscanner"
 	"github.com/tzcl/lox/glox/internal/ltoken"
 )

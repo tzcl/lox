@@ -2,7 +2,7 @@ package last
 
 import "github.com/tzcl/lox/glox/internal/ltoken"
 
-// TODO: Use sum type tool to check that all cases are being matched.
+//sumtype:decl
 type Expr interface {
 	expr()
 }

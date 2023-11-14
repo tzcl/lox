@@ -8,7 +8,6 @@ import (
 func Print(expr Expr) string {
 	var builder strings.Builder
 
-	// TODO: This should be exhaustive
 	switch expr := expr.(type) {
 	case LiteralExpr:
 		builder.WriteString(fmt.Sprint(expr.Value))

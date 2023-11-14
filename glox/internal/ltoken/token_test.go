@@ -1,9 +1,9 @@
 package ltoken_test
 
 import (
+	"github.com/hexops/autogold/v2"
 	"testing"
 
-	"github.com/hexops/autogold/v2"
 	"github.com/tzcl/lox/glox/internal/ltoken"
 )
 

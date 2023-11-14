@@ -1,0 +1,13 @@
+linters:
+  enable:
+    - gochecksumtype
+    - gci
+
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/tzcl/lox)
+      - blank
+      - dot
