@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/tzcl/lox/glox/internal/ast"
+	"github.com/tzcl/lox/glox/internal/parser"
 	"github.com/tzcl/lox/glox/internal/scanner"
 )
 
@@ -15,7 +17,6 @@ func main() {
 		fmt.Println("Usage: lox [script]")
 		os.Exit(1)
 	} else if len(args) == 1 {
-		// TODO: How do I want to handle errors?
 		runFile(args[0])
 	} else {
 		runPrompt()
@@ -60,6 +61,15 @@ func run(src string) error {
 	}
 
 	fmt.Println(tokens)
+
+	parser := parser.New(tokens)
+
+	expr, err := parser.Parse()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(ast.Print(expr))
 
 	return nil
 }

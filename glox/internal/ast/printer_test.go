@@ -11,14 +11,14 @@ import (
 
 func TestPrint(t *testing.T) {
 	expr := ast.BinaryExpr{
-		Operator: token.Token{Type: token.Star, Lexeme: "*", Literal: nil, Line: 1},
 		Left: ast.UnaryExpr{
-			Operator: token.Token{Type: token.Minus, Lexeme: "-", Literal: nil, Line: 1},
-			Expr:     ast.LiteralExpr{123},
+			Expr:     ast.NewLiteralExpr(123),
+			Operator: token.Token{Type: token.Minus, Lexeme: "-", Line: 1},
 		},
 		Right: ast.GroupingExpr{
-			Expr: ast.LiteralExpr{45.67},
+			Expr: ast.NewLiteralExpr(45.67),
 		},
+		Operator: token.Token{Type: token.Star, Lexeme: "*", Line: 1},
 	}
 
 	autogold.Expect("(* (- 123) (45.67))").Equal(t, ast.Print(expr))
@@ -26,23 +26,23 @@ func TestPrint(t *testing.T) {
 
 func TestPrintRPN(t *testing.T) {
 	expr := ast.BinaryExpr{
-		Operator: token.Token{Type: token.Star, Lexeme: "*", Literal: nil, Line: 1},
 		Left: ast.BinaryExpr{
-			Operator: token.Token{Type: token.Plus, Lexeme: "+", Literal: nil, Line: 1},
-			Left:     ast.LiteralExpr{1},
-			Right:    ast.LiteralExpr{2},
+			Left:     ast.NewLiteralExpr(1),
+			Right:    ast.NewLiteralExpr(2),
+			Operator: token.Token{Type: token.Plus, Lexeme: "+", Line: 1},
 		},
 		Right: ast.BinaryExpr{
-			Operator: token.Token{Type: token.Star, Lexeme: "*", Literal: nil, Line: 1},
-			Left:     ast.LiteralExpr{3},
+			Left: ast.NewLiteralExpr(3),
 			Right: ast.GroupingExpr{
 				Expr: ast.BinaryExpr{
-					Operator: token.Token{Type: token.Plus, Lexeme: "+", Literal: nil, Line: 1},
-					Left:     ast.LiteralExpr{4},
-					Right:    ast.LiteralExpr{5},
+					Left:     ast.NewLiteralExpr(4),
+					Right:    ast.NewLiteralExpr(5),
+					Operator: token.Token{Type: token.Plus, Lexeme: "+", Line: 1},
 				},
 			},
+			Operator: token.Token{Type: token.Star, Lexeme: "*", Line: 1},
 		},
+		Operator: token.Token{Type: token.Star, Lexeme: "*", Line: 1},
 	}
 
 	autogold.Expect("1 2 + 3 4 5 + * *").Equal(t, ast.PrintRPN(expr))

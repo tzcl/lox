@@ -2,7 +2,6 @@ package scanner
 
 import (
 	"fmt"
-	"strconv"
 	"unicode"
 
 	"github.com/tzcl/lox/glox/internal/token"
@@ -50,23 +49,23 @@ func (s *Scanner) scanToken() error {
 	switch r := s.next(); r {
 	// Single-character tokens
 	case '(':
-		s.addToken(token.LeftParen, nil)
+		s.addToken(token.LeftParen)
 	case ')':
-		s.addToken(token.RightParen, nil)
+		s.addToken(token.RightParen)
 	case '{':
-		s.addToken(token.LeftBrace, nil)
+		s.addToken(token.LeftBrace)
 	case '}':
-		s.addToken(token.RightBrace, nil)
+		s.addToken(token.RightBrace)
 	case ',':
-		s.addToken(token.Comma, nil)
+		s.addToken(token.Comma)
 	case '.':
-		s.addToken(token.Dot, nil)
+		s.addToken(token.Dot)
 	case '-':
-		s.addToken(token.Minus, nil)
+		s.addToken(token.Minus)
 	case '+':
-		s.addToken(token.Plus, nil)
+		s.addToken(token.Plus)
 	case ';':
-		s.addToken(token.Semicolon, nil)
+		s.addToken(token.Semicolon)
 
 	// Double-character tokens
 	case '!':
@@ -74,25 +73,25 @@ func (s *Scanner) scanToken() error {
 		if s.match('=') {
 			ttype = token.BangEqual
 		}
-		s.addToken(ttype, nil)
+		s.addToken(ttype)
 	case '=':
 		ttype := token.Equal
 		if s.match('=') {
 			ttype = token.EqualEqual
 		}
-		s.addToken(ttype, nil)
+		s.addToken(ttype)
 	case '<':
 		ttype := token.Less
 		if s.match('=') {
 			ttype = token.LessEqual
 		}
-		s.addToken(ttype, nil)
+		s.addToken(ttype)
 	case '>':
 		ttype := token.Greater
 		if s.match('=') {
 			ttype = token.GreaterEqual
 		}
-		s.addToken(ttype, nil)
+		s.addToken(ttype)
 	case '/':
 		switch n := s.peek(); n {
 		case '/':
@@ -106,13 +105,13 @@ func (s *Scanner) scanToken() error {
 				return err
 			}
 		default:
-			s.addToken(token.Slash, nil)
+			s.addToken(token.Slash)
 		}
 	case '*':
 		if s.peek() == '/' {
 			return s.error("found block comment without matching /*")
 		}
-		s.addToken(token.Star, nil)
+		s.addToken(token.Star)
 
 	// Ignore whitespace
 	case ' ', '\r', '\t':
@@ -152,15 +151,16 @@ func (s *Scanner) string() error {
 	}
 
 	if s.done() {
-		return s.error("unterminated string: " + string(s.source[s.start:s.curr]))
+		str := string(s.source[s.start:s.curr])
+		return s.error("unterminated string: " + str)
 	}
 
 	// The closing "
 	s.next()
 
 	// Trim the surrounding quotes
-	value := string(s.source[s.start+1 : s.curr-1])
-	s.addToken(token.String, value)
+	str := string(s.source[s.start+1 : s.curr-1])
+	s.addTokenWithLexeme(token.String, str)
 
 	return nil
 }
@@ -182,9 +182,8 @@ func (s *Scanner) number() {
 		}
 	}
 
-	// Ignore error because we've checked we have a valid float
-	value, _ := strconv.ParseFloat(string(s.source[s.start:s.curr]), 64)
-	s.addToken(token.Number, value)
+	number := string(s.source[s.start:s.curr])
+	s.addTokenWithLexeme(token.Number, number)
 }
 
 func (s *Scanner) identifier() error {
@@ -194,12 +193,13 @@ func (s *Scanner) identifier() error {
 	}
 
 	if s.match('"') {
-		return s.error(`string missing opening quote: ` + string(s.source[s.start:s.curr]))
+		ident := string(s.source[s.start:s.curr])
+		return s.error(`string missing opening quote: ` + ident)
 	}
 
 	ident := string(s.source[s.start:s.curr])
 	ttype := token.LookupKeyword(ident)
-	s.addToken(ttype, ident)
+	s.addTokenWithLexeme(ttype, ident)
 
 	return nil
 }
@@ -265,10 +265,14 @@ func (s *Scanner) peekNext() rune {
 	return s.source[s.curr+1]
 }
 
-func (s *Scanner) addToken(ttype token.Type, literal any) {
-	lexeme := string(s.source[s.start:s.curr])
-	token := token.Token{Type: ttype, Lexeme: lexeme, Literal: literal, Line: s.line}
+func (s *Scanner) addToken(ttype token.Type) {
+	s.addTokenWithLexeme(ttype, string(s.source[s.start:s.curr]))
+}
+
+func (s *Scanner) addTokenWithLexeme(ttype token.Type, lexeme string) {
+	token := token.Token{Type: ttype, Lexeme: lexeme, Line: s.line}
 	s.tokens = append(s.tokens, token)
+
 }
 
 func (s *Scanner) error(message string) error {
