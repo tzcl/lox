@@ -44,15 +44,15 @@ func TestToken_String(t *testing.T) {
 			expect: autogold.Expect("EOF"),
 		},
 		"String": {
-			token:  token.Token{Type: token.String, Literal: "hello world :D"},
+			token:  token.Token{Type: token.String, Lexeme: "hello world :D"},
 			expect: autogold.Expect(`String("hello world :D")`),
 		},
 		"Identifier": {
-			token:  token.Token{Type: token.Identifier, Literal: "_arst_123"},
+			token:  token.Token{Type: token.Identifier, Lexeme: "_arst_123"},
 			expect: autogold.Expect("Identifier(_arst_123)"),
 		},
 		"Number": {
-			token:  token.Token{Type: token.Number, Literal: 121.835},
+			token:  token.Token{Type: token.Number, Lexeme: "121.835"},
 			expect: autogold.Expect("Number(121.835)"),
 		},
 		"RightBrace": {

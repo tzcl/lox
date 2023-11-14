@@ -1,6 +1,8 @@
 package token
 
-import "fmt"
+import (
+	"fmt"
+)
 
 //go:generate stringer -type=Type -linecomment
 type Type int
@@ -75,10 +77,9 @@ func LookupKeyword(identifier string) Type {
 }
 
 type Token struct {
-	Type    Type
-	Lexeme  string
-	Literal any
-	Line    int
+	Type   Type
+	Lexeme string
+	Line   int
 }
 
 func (t Token) String() string {
@@ -86,9 +87,9 @@ func (t Token) String() string {
 	case EOF:
 		return "EOF"
 	case String:
-		return fmt.Sprintf("%s(%q)", t.Type, t.Literal)
+		return fmt.Sprintf("%s(%q)", t.Type, t.Lexeme)
 	case Identifier, Number:
-		return fmt.Sprintf("%s(%v)", t.Type, t.Literal)
+		return fmt.Sprintf("%s(%v)", t.Type, t.Lexeme)
 	default:
 		return t.Type.String()
 	}
