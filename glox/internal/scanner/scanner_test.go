@@ -124,7 +124,7 @@ func formatTokens(tokens []token.Token) string {
 		if i > 0 {
 			builder.WriteString(" → ")
 		}
-		builder.WriteString(fmt.Sprintf("%d %s", token.Line, token.String()))
+		builder.WriteString(fmt.Sprintf("%d %s", token.Line, token.Debug()))
 	}
 
 	return builder.String()

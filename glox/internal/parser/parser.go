@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -35,8 +36,7 @@ func (p *Parser) Parse() (expr ast.Expr, err error) {
 			if e, ok := r.(*ParserError); ok {
 				err = e
 			} else {
-				// Ahh! Unexpected panic!
-				panic(r)
+				err = errors.New(fmt.Sprint(r))
 			}
 		}
 	}()
@@ -131,6 +131,34 @@ func (p *Parser) primary() ast.Expr {
 		expr := p.expression()
 		p.consume(token.RightParen, "expected ')' after expression")
 		return ast.GroupingExpr{Expr: expr}
+
+	// Error productions
+	case token.Comma:
+		t := p.prev()
+		// Consume RHS
+		p.comma()
+		panic(&ParserError{token: t, message: "missing left-hand operand"})
+	case token.BangEqual, token.EqualEqual:
+		t := p.prev()
+		// Consume RHS
+		p.equality()
+		panic(&ParserError{token: t, message: "missing left-hand operand"})
+	case token.Greater, token.GreaterEqual, token.Less, token.LessEqual:
+		t := p.prev()
+		// Consume RHS
+		p.comparison()
+		panic(&ParserError{token: t, message: "missing left-hand operand"})
+	case token.Plus:
+		t := p.prev()
+		// Consume RHS
+		p.term()
+		panic(&ParserError{token: t, message: "missing left-hand operand"})
+	case token.Slash, token.Star:
+		t := p.prev()
+		// Consume RHS
+		p.factor()
+		panic(&ParserError{token: t, message: "missing left-hand operand"})
+
 	default:
 		panic(fmt.Sprint("parser: don't know how to parse token ", n))
 	}

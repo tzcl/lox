@@ -67,7 +67,7 @@ func TestParser_ParseError(t *testing.T) {
 		},
 		"AtToken": {
 			source: "(1 + 1       a",
-			expect: autogold.Expect("[line 1]: Error at 'Identifier(a)': expected ')' after expression"),
+			expect: autogold.Expect("[line 1]: Error at 'a': expected ')' after expression"),
 		},
 		"Conditional": {
 			source: "1 > 2 ? 3",

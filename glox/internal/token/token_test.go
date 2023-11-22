@@ -34,7 +34,7 @@ func TestLookupKeyword(t *testing.T) {
 	}
 }
 
-func TestToken_String(t *testing.T) {
+func TestToken_Debug(t *testing.T) {
 	tests := map[string]struct {
 		token  token.Token
 		expect autogold.Value
@@ -66,7 +66,7 @@ func TestToken_String(t *testing.T) {
 		test := test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			got := test.token.String()
+			got := test.token.Debug()
 			test.expect.Equal(t, got)
 		})
 	}

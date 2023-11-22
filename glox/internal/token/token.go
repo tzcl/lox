@@ -84,15 +84,26 @@ type Token struct {
 	Line   int
 }
 
+// Debug converts the token into a string useful for debugging.
+func (t Token) Debug() string {
+	switch ty := t.Type; ty {
+	case EOF:
+		return "EOF"
+	case String:
+		return fmt.Sprintf("%s(%q)", ty, t.Lexeme)
+	case Identifier, Number:
+		return fmt.Sprintf("%s(%v)", ty, t.Lexeme)
+	default:
+		return ty.String()
+	}
+}
+
+// String converts the token to a string useful for the user.
 func (t Token) String() string {
 	switch t.Type {
 	case EOF:
 		return "EOF"
-	case String:
-		return fmt.Sprintf("%s(%q)", t.Type, t.Lexeme)
-	case Identifier, Number:
-		return fmt.Sprintf("%s(%v)", t.Type, t.Lexeme)
 	default:
-		return t.Type.String()
+		return t.Lexeme
 	}
 }
