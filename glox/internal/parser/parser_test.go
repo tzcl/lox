@@ -19,6 +19,10 @@ func TestParser_Parse(t *testing.T) {
 			source: "(1+2*3/(4-5))",
 			expect: autogold.Expect("((+ 1 (/ (* 2 3) ((- 4 5)))))"),
 		},
+		"Comma": {
+			source: `"a", "b"`,
+			expect: autogold.Expect(`(, "a" "b")`),
+		},
 	}
 
 	t.Parallel()

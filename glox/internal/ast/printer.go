@@ -30,7 +30,7 @@ func Print(expr Expr) string {
 			Print(expr.Expr),
 		))
 	default:
-		panic(fmt.Sprintf("unknown expr %T", expr))
+		panic(fmt.Sprintf("printer: unknown expr %T", expr))
 	}
 
 	return builder.String()
@@ -58,7 +58,7 @@ func PrintRPN(expr Expr) string {
 	case GroupingExpr:
 		builder.WriteString(PrintRPN(expr.Expr))
 	default:
-		panic(fmt.Sprintf("unknown expr %T", expr))
+		panic(fmt.Sprintf("printer: unknown expr %T", expr))
 	}
 
 	return builder.String()

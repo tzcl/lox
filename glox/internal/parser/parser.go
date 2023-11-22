@@ -35,6 +35,7 @@ func (p *Parser) Parse() (expr ast.Expr, err error) {
 			if e, ok := r.(*ParserError); ok {
 				err = e
 			} else {
+				// Ahh! Unexpected panic!
 				panic(r)
 			}
 		}
@@ -44,27 +45,13 @@ func (p *Parser) Parse() (expr ast.Expr, err error) {
 }
 
 func (p *Parser) expression() ast.Expr {
-	return p.equality()
+	return p.comma()
 }
 
-type rule func() ast.Expr
-
-// Creates a left-associating binary expression if the next token matches any
-// of the provided token types.
-func (p *Parser) leftAssoc(next rule, types ...token.Type) ast.Expr {
-	expr := next()
-
-	for p.match(types...) {
-		op := p.prev()
-		right := next()
-		expr = ast.BinaryExpr{
-			Operator: op,
-			Left:     expr,
-			Right:    right,
-		}
-	}
-
-	return expr
+// The comma operator lets you pack a series of expressions where a single one
+// is expected (expect incept a function call's argument list).
+func (p *Parser) comma() ast.Expr {
+	return p.leftAssoc(p.equality, token.Comma)
 }
 
 func (p *Parser) equality() ast.Expr {
@@ -124,7 +111,7 @@ func (p *Parser) primary() ast.Expr {
 		p.consume(token.RightParen, "expected ')' after expression")
 		return ast.GroupingExpr{Expr: expr}
 	default:
-		panic(fmt.Sprint("unknown token ", n))
+		panic(fmt.Sprint("parser: don't know how to parse token ", n))
 	}
 }
 
@@ -158,6 +145,26 @@ func (p *Parser) Synchronise() {
 
 		p.next()
 	}
+}
+
+type rule func() ast.Expr
+
+// Creates a left-associating binary expression if the next token matches any
+// of the provided token types.
+func (p *Parser) leftAssoc(next rule, types ...token.Type) ast.Expr {
+	expr := next()
+
+	for p.match(types...) {
+		op := p.prev()
+		right := next()
+		expr = ast.BinaryExpr{
+			Operator: op,
+			Left:     expr,
+			Right:    right,
+		}
+	}
+
+	return expr
 }
 
 func (p *Parser) match(types ...token.Type) bool {

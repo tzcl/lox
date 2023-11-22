@@ -28,7 +28,7 @@ func NewLiteralExpr(literal any) LiteralExpr {
 	case string:
 		return LiteralExpr{Literal: StringLiteral{value: value}}
 	default:
-		panic(fmt.Sprintf("unknown literal %T", literal))
+		panic(fmt.Sprintf("expr: unknown literal %T", literal))
 	}
 }
 
