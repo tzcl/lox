@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	// TODO: Can I make these dot imports?
 	"github.com/tzcl/lox/glox/internal/ast"
 	"github.com/tzcl/lox/glox/internal/token"
 )
@@ -48,12 +47,16 @@ func (p *Parser) expression() ast.Expr {
 	return p.equality()
 }
 
-func (p *Parser) equality() ast.Expr {
-	expr := p.comparison()
+type rule func() ast.Expr
 
-	for p.match(token.BangEqual, token.EqualEqual) {
+// Creates a left-associating binary expression if the next token matches any
+// of the provided token types.
+func (p *Parser) leftAssoc(next rule, types ...token.Type) ast.Expr {
+	expr := next()
+
+	for p.match(types...) {
 		op := p.prev()
-		right := p.comparison()
+		right := next()
 		expr = ast.BinaryExpr{
 			Operator: op,
 			Left:     expr,
@@ -64,58 +67,26 @@ func (p *Parser) equality() ast.Expr {
 	return expr
 }
 
-// TODO: This and equality are almost identical
-func (p *Parser) comparison() ast.Expr {
-	expr := p.term()
+func (p *Parser) equality() ast.Expr {
+	return p.leftAssoc(p.comparison, token.BangEqual, token.EqualEqual)
+}
 
-	for p.match(
+func (p *Parser) comparison() ast.Expr {
+	return p.leftAssoc(
+		p.term,
 		token.Greater,
 		token.GreaterEqual,
 		token.Less,
 		token.LessEqual,
-	) {
-		op := p.prev()
-		right := p.term()
-		expr = ast.BinaryExpr{
-			Operator: op,
-			Left:     expr,
-			Right:    right,
-		}
-	}
-
-	return expr
+	)
 }
 
 func (p *Parser) term() ast.Expr {
-	expr := p.factor()
-
-	for p.match(token.Minus, token.Plus) {
-		op := p.prev()
-		right := p.factor()
-		expr = ast.BinaryExpr{
-			Operator: op,
-			Left:     expr,
-			Right:    right,
-		}
-	}
-
-	return expr
+	return p.leftAssoc(p.factor, token.Minus, token.Plus)
 }
 
 func (p *Parser) factor() ast.Expr {
-	expr := p.unary()
-
-	for p.match(token.Slash, token.Star) {
-		op := p.prev()
-		right := p.unary()
-		expr = ast.BinaryExpr{
-			Operator: op,
-			Left:     expr,
-			Right:    right,
-		}
-	}
-
-	return expr
+	return p.leftAssoc(p.unary, token.Slash, token.Star)
 }
 
 func (p *Parser) unary() ast.Expr {
