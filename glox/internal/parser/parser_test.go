@@ -16,12 +16,20 @@ func TestParser_Parse(t *testing.T) {
 		expect autogold.Value
 	}{
 		"Success": {
-			source: "(1+2*3/(4-5))",
-			expect: autogold.Expect("((+ 1 (/ (* 2 3) ((- 4 5)))))"),
+			source: "1+2*3/(4-5)",
+			expect: autogold.Expect("(+ 1 (/ (* 2 3) ((- 4 5))))"),
 		},
 		"Comma": {
 			source: `"a", "b"`,
 			expect: autogold.Expect(`(, "a" "b")`),
+		},
+		"Conditional": {
+			source: `1 > 2 ? ":O" : ":D"`,
+			expect: autogold.Expect(`(if (> 1 2) then ":O" else ":D")`),
+		},
+		"NestedConditional": {
+			source: `1 > 2 ? "a" : 3 > 4 ? "b" : "c"`,
+			expect: autogold.Expect(`(if (> 1 2) then "a" else (if (> 3 4) then "b" else "c"))`),
 		},
 	}
 
@@ -59,7 +67,11 @@ func TestParser_ParseError(t *testing.T) {
 		},
 		"AtToken": {
 			source: "(1 + 1       a",
-			expect: autogold.Expect("[line 1]: Error at 'a': expected ')' after expression"),
+			expect: autogold.Expect("[line 1]: Error at 'Identifier(a)': expected ')' after expression"),
+		},
+		"Conditional": {
+			source: "1 > 2 ? 3",
+			expect: autogold.Expect("[line 1]: Error at end: Conditional expression missing ':'"),
 		},
 	}
 

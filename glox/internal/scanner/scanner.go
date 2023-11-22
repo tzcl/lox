@@ -66,6 +66,10 @@ func (s *Scanner) scanToken() error {
 		s.addToken(token.Plus)
 	case ';':
 		s.addToken(token.Semicolon)
+	case '?':
+		s.addToken(token.QuestionMark)
+	case ':':
+		s.addToken(token.Colon)
 
 	// Double-character tokens
 	case '!':

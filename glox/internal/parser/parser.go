@@ -17,7 +17,7 @@ func (e *ParserError) Error() string {
 	if e.token.Type == token.EOF {
 		return fmt.Sprintf("[line %d]: Error at end: %s", e.token.Line, e.message)
 	}
-	return fmt.Sprintf("[line %d]: Error at '%s': %s", e.token.Line, e.token.Lexeme, e.message)
+	return fmt.Sprintf("[line %d]: Error at '%s': %s", e.token.Line, e.token, e.message)
 }
 
 type Parser struct {
@@ -49,9 +49,30 @@ func (p *Parser) expression() ast.Expr {
 }
 
 // The comma operator lets you pack a series of expressions where a single one
-// is expected (expect incept a function call's argument list).
+// is expected (expect incept a function call's argument list). Has the lowest
+// precedence as we want it to group expressions.
 func (p *Parser) comma() ast.Expr {
-	return p.leftAssoc(p.equality, token.Comma)
+	return p.leftAssoc(p.conditional, token.Comma)
+}
+
+// The ternary conditional operator lets you write an if-statement as an
+// expression. This has higher precedence than assignment to let you assign
+// to the result of a conditional expression.
+func (p *Parser) conditional() ast.Expr {
+	expr := p.equality()
+
+	if p.match(token.QuestionMark) {
+		then := p.expression()
+		p.consume(token.Colon, "Conditional expression missing ':'")
+		alt := p.conditional()
+		expr = ast.ConditionalExpr{
+			Cond: expr,
+			Then: then,
+			Alt:  alt,
+		}
+	}
+
+	return expr
 }
 
 func (p *Parser) equality() ast.Expr {

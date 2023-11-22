@@ -53,3 +53,9 @@ type GroupingExpr struct {
 }
 
 func (GroupingExpr) expr() {}
+
+type ConditionalExpr struct {
+	Cond, Then, Alt Expr
+}
+
+func (ConditionalExpr) expr() {}
