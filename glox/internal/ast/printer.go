@@ -10,7 +10,7 @@ func Print(expr Expr) string {
 
 	switch expr := expr.(type) {
 	case LiteralExpr:
-		builder.WriteString(expr.Literal.String())
+		builder.WriteString(printLiteral(expr.Literal))
 	case UnaryExpr:
 		builder.WriteString(fmt.Sprintf("(%s %s)",
 			expr.Operator.Lexeme,
@@ -44,7 +44,7 @@ func PrintRPN(expr Expr) string {
 
 	switch expr := expr.(type) {
 	case LiteralExpr:
-		builder.WriteString(expr.Literal.String())
+		builder.WriteString(printLiteral(expr.Literal))
 	case UnaryExpr:
 		builder.WriteString(fmt.Sprintf("%s %s",
 			PrintRPN(expr.Expr),
@@ -69,4 +69,15 @@ func PrintRPN(expr Expr) string {
 	}
 
 	return builder.String()
+}
+
+func printLiteral(lit any) string {
+	switch lit := lit.(type) {
+	case nil:
+		return "nil"
+	case string:
+		return fmt.Sprintf("%q", lit)
+	default:
+		return fmt.Sprint(lit)
+	}
 }

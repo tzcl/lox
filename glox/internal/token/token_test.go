@@ -66,7 +66,7 @@ func TestToken_Debug(t *testing.T) {
 		test := test
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			got := test.token.Debug()
+			got := test.token.String()
 			test.expect.Equal(t, got)
 		})
 	}

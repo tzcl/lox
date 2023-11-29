@@ -18,7 +18,7 @@ func (e *ParserError) Error() string {
 	if e.token.Type == token.EOF {
 		return fmt.Sprintf("[line %d]: Error at end: %s", e.token.Line, e.message)
 	}
-	return fmt.Sprintf("[line %d]: Error at '%s': %s", e.token.Line, e.token, e.message)
+	return fmt.Sprintf("[line %d]: Error at '%s': %s", e.token.Line, e.token.UserString(), e.message)
 }
 
 type Parser struct {
@@ -30,6 +30,7 @@ func New(tokens []token.Token) *Parser {
 	return &Parser{tokens: tokens}
 }
 
+// TODO: Should this parse multiple expressions?
 func (p *Parser) Parse() (expr ast.Expr, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -113,20 +114,20 @@ func (p *Parser) unary() ast.Expr {
 func (p *Parser) primary() ast.Expr {
 	switch n := p.next(); n.Type {
 	case token.False:
-		return ast.NewLiteralExpr(false)
+		return ast.LiteralExpr{Literal: false}
 	case token.True:
-		return ast.NewLiteralExpr(true)
+		return ast.LiteralExpr{Literal: true}
 	case token.Nil:
-		return ast.NewLiteralExpr(nil)
+		return ast.LiteralExpr{Literal: nil}
 	case token.Number:
 		number, err := strconv.ParseFloat(n.Lexeme, 64)
 		if err != nil {
 			// Should be unreachable
 			panic(err)
 		}
-		return ast.NewLiteralExpr(number)
+		return ast.LiteralExpr{Literal: number}
 	case token.String:
-		return ast.NewLiteralExpr(n.Lexeme)
+		return ast.LiteralExpr{Literal: n.Lexeme}
 	case token.LeftParen:
 		expr := p.expression()
 		p.consume(token.RightParen, "expected ')' after expression")

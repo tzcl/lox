@@ -84,8 +84,8 @@ type Token struct {
 	Line   int
 }
 
-// Debug converts the token into a string useful for debugging.
-func (t Token) Debug() string {
+// String converts the token into a string useful for debugging.
+func (t Token) String() string {
 	switch ty := t.Type; ty {
 	case EOF:
 		return "EOF"
@@ -98,8 +98,8 @@ func (t Token) Debug() string {
 	}
 }
 
-// String converts the token to a string useful for the user.
-func (t Token) String() string {
+// UserString converts the token to a string useful for the user.
+func (t Token) UserString() string {
 	switch t.Type {
 	case EOF:
 		return "EOF"
