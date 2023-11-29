@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/tzcl/lox/glox/internal/ast"
+	"github.com/tzcl/lox/glox/internal/interpreter"
 	"github.com/tzcl/lox/glox/internal/parser"
 	"github.com/tzcl/lox/glox/internal/scanner"
 )
@@ -70,6 +71,13 @@ func run(src string) error {
 	}
 
 	fmt.Println(ast.Print(expr))
+
+	value, err := interpreter.Interpret(expr)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(">> ", value)
 
 	return nil
 }
