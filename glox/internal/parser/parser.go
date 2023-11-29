@@ -30,42 +30,80 @@ func New(tokens []token.Token) *Parser {
 	return &Parser{tokens: tokens}
 }
 
-func (p *Parser) Parse() (stmts []ast.Stmt, err error) {
+func (p *Parser) Parse() ([]ast.Stmt, error) {
+	var stmts []ast.Stmt
+	var errs []error
+
+	for !p.done() {
+		stmt, err := p.ParseStmt()
+		if err != nil {
+			errs = append(errs, err)
+		}
+		stmts = append(stmts, stmt)
+	}
+
+	return stmts, errors.Join(errs...)
+}
+
+func (p *Parser) ParseStmt() (stmt ast.Stmt, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			if e, ok := r.(*ParserError); ok {
-				err = e
+			var ok bool
+			if err, ok = r.(*ParserError); ok {
+				p.synchronise()
 			} else {
-				err = errors.New(fmt.Sprint(r))
+				panic(r)
 			}
 		}
 	}()
 
-	for !p.done() {
-		stmts = append(stmts, p.statement())
+	return p.declaration(), nil
+}
+
+func (p *Parser) declaration() ast.Stmt {
+	if p.match(token.Var) {
+		return p.varDeclaration()
 	}
 
-	return stmts, nil
+	return p.statement()
+}
+
+func (p *Parser) varDeclaration() ast.Stmt {
+	name := p.consume(token.Identifier, "expected variable name")
+
+	var initialiser ast.Expr
+	if p.match(token.Equal) {
+		initialiser = p.expression()
+	}
+
+	p.consume(token.Semicolon, "expected ';' after variable declaration")
+	return ast.VarStmt{Name: name, Initialiser: initialiser}
 }
 
 func (p *Parser) statement() ast.Stmt {
-	if p.match(token.Print) {
-		return p.printStmt()
+	switch {
+	case p.match(token.Print):
+		expr := p.expression()
+		p.consume(token.Semicolon, "expected ';' after expression")
+		return ast.PrintStmt{Expr: expr}
+	case p.match(token.LeftBrace):
+		return ast.BlockStmt{Stmts: p.block()}
 	}
 
-	return p.expressionStmt()
-}
-
-func (p *Parser) printStmt() ast.Stmt {
 	expr := p.expression()
-	p.consume(token.Semicolon, "Expect ';' after expression")
-	return ast.PrintStmt{Expr: expr}
-}
-
-func (p *Parser) expressionStmt() ast.Stmt {
-	expr := p.expression()
-	p.consume(token.Semicolon, "Expect ';' after expression")
+	p.consume(token.Semicolon, "expected ';' after expression")
 	return ast.ExprStmt{Expr: expr}
+}
+
+func (p *Parser) block() []ast.Stmt {
+	var stmts []ast.Stmt
+
+	for !p.check(token.RightBrace) && !p.done() {
+		stmts = append(stmts, p.declaration())
+	}
+
+	p.consume(token.RightBrace, "expect '}' after block")
+	return stmts
 }
 
 func (p *Parser) expression() ast.Expr {
@@ -76,7 +114,25 @@ func (p *Parser) expression() ast.Expr {
 // is expected (expect incept a function call's argument list). Has the lowest
 // precedence as we want it to group expressions.
 func (p *Parser) comma() ast.Expr {
-	return p.leftAssoc(p.conditional, token.Comma)
+	return p.leftAssoc(p.assignment, token.Comma)
+}
+
+func (p *Parser) assignment() ast.Expr {
+	expr := p.conditional()
+
+	if p.match(token.Equal) {
+		equals := p.prev()
+		value := p.assignment()
+
+		if expr, ok := expr.(ast.VarExpr); ok {
+			name := expr.Name
+			return ast.AssignExpr{Name: name, Value: value}
+		}
+
+		panic(&ParserError{token: equals, message: "invalid assignment target"})
+	}
+
+	return expr
 }
 
 // The ternary conditional operator lets you write an if-statement as an
@@ -155,6 +211,8 @@ func (p *Parser) primary() ast.Expr {
 		expr := p.expression()
 		p.consume(token.RightParen, "expected ')' after expression")
 		return ast.GroupingExpr{Expr: expr}
+	case token.Identifier:
+		return ast.VarExpr{Name: p.prev()}
 
 	// Error productions
 	case token.Comma:
@@ -196,7 +254,7 @@ func (p *Parser) consume(ttype token.Type, message string) token.Token {
 	panic(&ParserError{p.peek(), message})
 }
 
-func (p *Parser) Synchronise() {
+func (p *Parser) synchronise() {
 	p.next()
 
 	for !p.done() {

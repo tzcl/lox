@@ -17,3 +17,5 @@ require (
 	golang.org/x/tools v0.15.0 // indirect
 	mvdan.cc/gofumpt v0.5.0 // indirect
 )
+
+replace github.com/hexops/valast => github.com/tzcl/valast v0.0.0-20231201042525-3256e6fb733d

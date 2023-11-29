@@ -61,6 +61,7 @@ func run(src string) error {
 		return err
 	}
 
+	fmt.Println("----- SCANNER -----")
 	fmt.Println(tokens)
 
 	parser := parser.New(tokens)
@@ -70,10 +71,11 @@ func run(src string) error {
 		return err
 	}
 
-	for _, stmt := range stmts {
-		fmt.Println(ast.Print(stmt))
-	}
+	fmt.Println("----- PARSER -----")
+	fmt.Print(ast.PrintProgram(stmts))
 
+	fmt.Println("----- INTERPRETER -----")
+	interpreter := interpreter.New(os.Stdout)
 	err = interpreter.Interpret(stmts)
 	if err != nil {
 		return err

@@ -1,6 +1,8 @@
 package ast
 
-import "github.com/tzcl/lox/glox/internal/token"
+import (
+	"github.com/tzcl/lox/glox/internal/token"
+)
 
 //sumtype:decl
 type Node interface {
@@ -13,6 +15,13 @@ type Stmt interface {
 	stmt()
 }
 
+type PrintStmt struct {
+	Expr Expr
+}
+
+func (PrintStmt) node() {}
+func (PrintStmt) stmt() {}
+
 type ExprStmt struct {
 	Expr Expr
 }
@@ -20,12 +29,20 @@ type ExprStmt struct {
 func (ExprStmt) node() {}
 func (ExprStmt) stmt() {}
 
-type PrintStmt struct {
-	Expr Expr
+type VarStmt struct {
+	Name        token.Token
+	Initialiser Expr
 }
 
-func (PrintStmt) node() {}
-func (PrintStmt) stmt() {}
+func (VarStmt) node() {}
+func (VarStmt) stmt() {}
+
+type BlockStmt struct {
+	Stmts []Stmt
+}
+
+func (BlockStmt) node() {}
+func (BlockStmt) stmt() {}
 
 //sumtype:decl
 type Expr interface {
@@ -69,3 +86,18 @@ type ConditionalExpr struct {
 
 func (ConditionalExpr) node() {}
 func (ConditionalExpr) expr() {}
+
+type VarExpr struct {
+	Name token.Token
+}
+
+func (VarExpr) node() {}
+func (VarExpr) expr() {}
+
+type AssignExpr struct {
+	Name  token.Token
+	Value Expr
+}
+
+func (AssignExpr) node() {}
+func (AssignExpr) expr() {}

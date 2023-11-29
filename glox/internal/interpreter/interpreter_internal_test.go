@@ -1,7 +1,6 @@
-package parser_test
+package interpreter
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/hexops/autogold/v2"
@@ -11,26 +10,26 @@ import (
 	"github.com/tzcl/lox/glox/internal/scanner"
 )
 
-func TestParser_Parse(t *testing.T) {
+func TestInterpreter_evaluate(t *testing.T) {
 	tests := map[string]struct {
 		source string
 		expect autogold.Value
 	}{
-		"Success": {
+		"Maths": {
 			source: "1+2*3/(4-5);",
-			expect: autogold.Expect("(+ 1 (/ (* 2 3) ((- 4 5))))"),
+			expect: autogold.Expect(float64(-5)),
 		},
-		"Comma": {
-			source: `"a", "b";`,
-			expect: autogold.Expect(`(, "a" "b")`),
+		"Equality": {
+			source: "false == true == false;",
+			expect: autogold.Expect(true),
 		},
-		"Conditional": {
-			source: `1 > 2 ? ":O" : ":D";`,
-			expect: autogold.Expect(`(if (> 1 2) then ":O" else ":D")`),
+		"NilEquals": {
+			source: "nil == nil;",
+			expect: autogold.Expect(true),
 		},
-		"NestedConditional": {
-			source: `1 > 2 ? "a" : 3 > 4 ? "b" : "c";`,
-			expect: autogold.Expect(`(if (> 1 2) then "a" else (if (> 3 4) then "b" else "c"))`),
+		"NilNotEquals": {
+			source: "nil == true;",
+			expect: autogold.Expect(false),
 		},
 	}
 
@@ -52,33 +51,33 @@ func TestParser_Parse(t *testing.T) {
 				t.Fatal("unexpected err: ", err)
 			}
 
-			node, ok := stmts[0].(ast.Node)
+			expr, ok := stmts[0].(ast.ExprStmt)
 			if !ok {
 				t.Fatal("unexpected statement: ", stmts[0])
 			}
 
-			got := strings.TrimSpace(ast.Print(node))
-			test.expect.Equal(t, got)
+			interpreter := New(nil)
+			result, err := interpreter.evaluate(expr.Expr)
+			if err != nil {
+				t.Fatal("unexpected err: ", err)
+			}
+			test.expect.Equal(t, result)
 		})
 	}
 }
 
-func TestParser_ParseError(t *testing.T) {
+func TestInterpreter_evaluateError(t *testing.T) {
 	tests := map[string]struct {
 		source string
 		expect autogold.Value
 	}{
-		"AtEnd": {
-			source: "(1 + 1",
-			expect: autogold.Expect("[line 1]: Error at end: expected ')' after expression"),
+		"InvalidOperands": {
+			source: `1+"2";`,
+			expect: autogold.Expect("[line 1]: Error at '+': Operands must be numbers"),
 		},
-		"AtToken": {
-			source: "(1 + 1       a",
-			expect: autogold.Expect("[line 1]: Error at 'a': expected ')' after expression"),
-		},
-		"Conditional": {
-			source: "1 > 2 ? 3",
-			expect: autogold.Expect("[line 1]: Error at end: Conditional expression missing ':'"),
+		"DivideByZero": {
+			source: "1/0;",
+			expect: autogold.Expect("[line 1]: Error at '/': Dividing by zero"),
 		},
 	}
 
@@ -95,11 +94,18 @@ func TestParser_ParseError(t *testing.T) {
 			}
 
 			parser := parser.New(tokens)
-			_, err = parser.Parse()
-			if err == nil {
-				t.Fatal("expected an error")
+			stmts, err := parser.Parse()
+			if err != nil {
+				t.Fatal("unexpected err: ", err)
 			}
 
+			expr, ok := stmts[0].(ast.ExprStmt)
+			if !ok {
+				t.Fatal("unexpected statement: ", stmts[0])
+			}
+
+			interpreter := New(nil)
+			_, err = interpreter.evaluate(expr.Expr)
 			test.expect.Equal(t, err.Error())
 		})
 	}

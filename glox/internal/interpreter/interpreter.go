@@ -2,12 +2,12 @@ package interpreter
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/tzcl/lox/glox/internal/ast"
+	"github.com/tzcl/lox/glox/internal/env"
 	"github.com/tzcl/lox/glox/internal/token"
 )
-
-type Value any
 
 // TODO: This is identical to ParserError
 type InterpreterError struct {
@@ -22,9 +22,19 @@ func (e *InterpreterError) Error() string {
 	return fmt.Sprintf("[line %d]: Error at '%s': %s", e.token.Line, e.token.UserString(), e.message)
 }
 
-func Interpret(stmts []ast.Stmt) error {
+type Interpreter struct {
+	env    *env.Environment
+	writer io.StringWriter
+}
+
+func New(writer io.StringWriter) *Interpreter {
+	// Every interpreter has its own global environment
+	return &Interpreter{env: env.New(nil), writer: writer}
+}
+
+func (i *Interpreter) Interpret(stmts []ast.Stmt) error {
 	for _, stmt := range stmts {
-		if err := execute(stmt); err != nil {
+		if err := i.execute(stmt); err != nil {
 			return err
 		}
 	}
@@ -32,16 +42,55 @@ func Interpret(stmts []ast.Stmt) error {
 	return nil
 }
 
-func execute(stmt ast.Stmt) error {
+func (i *Interpreter) execute(stmt ast.Stmt) error {
 	switch stmt := stmt.(type) {
 	case ast.PrintStmt:
-		value, err := evaluate(stmt.Expr)
+		value, err := i.evaluate(stmt.Expr)
 		if err != nil {
 			return err
 		}
-		fmt.Println(value)
+		_, err = i.writer.WriteString(fmt.Sprint(value) + "\n")
+		if err != nil {
+			return err
+		}
 	case ast.ExprStmt:
-		if _, err := evaluate(stmt.Expr); err != nil {
+		if _, err := i.evaluate(stmt.Expr); err != nil {
+			return err
+		}
+	case ast.VarStmt:
+		var value any
+		if stmt.Initialiser != nil {
+			result, err := i.evaluate(stmt.Initialiser)
+			if err != nil {
+				return err
+			}
+			value = result
+		}
+
+		i.env.Define(stmt.Name.Lexeme, value)
+	case ast.BlockStmt:
+		if err := i.executeBlock(stmt.Stmts, env.New(i.env)); err != nil {
+			return err
+		}
+	default:
+		panic(fmt.Sprintf("interpret: unknown statement %T", stmt))
+	}
+
+	return nil
+}
+
+// TODO: Can I get rid of the env field?
+func (i *Interpreter) executeBlock(stmts []ast.Stmt, env *env.Environment) error {
+	prev := i.env
+	defer func() {
+		// Reset environment
+		i.env = prev
+	}()
+
+	i.env = env
+
+	for _, stmt := range stmts {
+		if err := i.execute(stmt); err != nil {
 			return err
 		}
 	}
@@ -49,31 +98,40 @@ func execute(stmt ast.Stmt) error {
 	return nil
 }
 
-func evaluate(expr ast.Expr) (Value, error) {
+func (i *Interpreter) evaluate(expr ast.Expr) (any, error) {
 	switch expr := expr.(type) {
 	case ast.LiteralExpr:
 		return literal(expr)
 	case ast.GroupingExpr:
-		return grouping(expr)
+		return i.grouping(expr)
 	case ast.UnaryExpr:
-		return unary(expr)
+		return i.unary(expr)
 	case ast.BinaryExpr:
-		return binary(expr)
+		return i.binary(expr)
+	case ast.VarExpr:
+		return i.env.Get(expr.Name), nil
+	case ast.AssignExpr:
+		value, err := i.evaluate(expr.Value)
+		if err != nil {
+			return nil, err
+		}
+		i.env.Assign(expr.Name, value)
+		return value, nil
 	default:
 		panic(fmt.Sprintf("interpret: unknown expression type %T", expr))
 	}
 }
 
-func literal(expr ast.LiteralExpr) (Value, error) {
+func literal(expr ast.LiteralExpr) (any, error) {
 	return expr.Literal, nil
 }
 
-func grouping(expr ast.GroupingExpr) (Value, error) {
-	return evaluate(expr.Expr)
+func (i *Interpreter) grouping(expr ast.GroupingExpr) (any, error) {
+	return i.evaluate(expr.Expr)
 }
 
-func unary(expr ast.UnaryExpr) (Value, error) {
-	right, err := evaluate(expr.Expr)
+func (i *Interpreter) unary(expr ast.UnaryExpr) (any, error) {
+	right, err := i.evaluate(expr.Expr)
 	if err != nil {
 		return nil, err
 	}
@@ -92,12 +150,12 @@ func unary(expr ast.UnaryExpr) (Value, error) {
 	}
 }
 
-func binary(expr ast.BinaryExpr) (Value, error) {
-	left, err := evaluate(expr.Left)
+func (i *Interpreter) binary(expr ast.BinaryExpr) (any, error) {
+	left, err := i.evaluate(expr.Left)
 	if err != nil {
 		return nil, err
 	}
-	right, err := evaluate(expr.Right)
+	right, err := i.evaluate(expr.Right)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +224,7 @@ func binary(expr ast.BinaryExpr) (Value, error) {
 	}
 }
 
-func assertNumbers(left, right Value) (float64, float64, bool) {
+func assertNumbers(left, right any) (float64, float64, bool) {
 	l, ok := left.(float64)
 	if !ok {
 		return 0, 0, false
@@ -178,7 +236,7 @@ func assertNumbers(left, right Value) (float64, float64, bool) {
 	return l, r, true
 }
 
-func isTruthy(value Value) bool {
+func isTruthy(value any) bool {
 	switch value := value.(type) {
 	case nil:
 		return false
