@@ -65,19 +65,19 @@ func run(src string) error {
 
 	parser := parser.New(tokens)
 
-	expr, err := parser.Parse()
+	stmts, err := parser.Parse()
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(ast.Print(expr))
+	for _, stmt := range stmts {
+		fmt.Println(ast.Print(stmt))
+	}
 
-	value, err := interpreter.Interpret(expr)
+	err = interpreter.Interpret(stmts)
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(">> ", value)
 
 	return nil
 }

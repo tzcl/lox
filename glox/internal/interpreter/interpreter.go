@@ -22,7 +22,34 @@ func (e *InterpreterError) Error() string {
 	return fmt.Sprintf("[line %d]: Error at '%s': %s", e.token.Line, e.token.UserString(), e.message)
 }
 
-func Interpret(expr ast.Expr) (Value, error) {
+func Interpret(stmts []ast.Stmt) error {
+	for _, stmt := range stmts {
+		if err := execute(stmt); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func execute(stmt ast.Stmt) error {
+	switch stmt := stmt.(type) {
+	case ast.PrintStmt:
+		value, err := evaluate(stmt.Expr)
+		if err != nil {
+			return err
+		}
+		fmt.Println(value)
+	case ast.ExprStmt:
+		if _, err := evaluate(stmt.Expr); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func evaluate(expr ast.Expr) (Value, error) {
 	switch expr := expr.(type) {
 	case ast.LiteralExpr:
 		return literal(expr)
@@ -42,11 +69,11 @@ func literal(expr ast.LiteralExpr) (Value, error) {
 }
 
 func grouping(expr ast.GroupingExpr) (Value, error) {
-	return Interpret(expr.Expr)
+	return evaluate(expr.Expr)
 }
 
 func unary(expr ast.UnaryExpr) (Value, error) {
-	right, err := Interpret(expr.Expr)
+	right, err := evaluate(expr.Expr)
 	if err != nil {
 		return nil, err
 	}
@@ -66,11 +93,11 @@ func unary(expr ast.UnaryExpr) (Value, error) {
 }
 
 func binary(expr ast.BinaryExpr) (Value, error) {
-	left, err := Interpret(expr.Left)
+	left, err := evaluate(expr.Left)
 	if err != nil {
 		return nil, err
 	}
-	right, err := Interpret(expr.Right)
+	right, err := evaluate(expr.Right)
 	if err != nil {
 		return nil, err
 	}

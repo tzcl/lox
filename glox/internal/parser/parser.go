@@ -30,8 +30,7 @@ func New(tokens []token.Token) *Parser {
 	return &Parser{tokens: tokens}
 }
 
-// TODO: Should this parse multiple expressions?
-func (p *Parser) Parse() (expr ast.Expr, err error) {
+func (p *Parser) Parse() (stmts []ast.Stmt, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if e, ok := r.(*ParserError); ok {
@@ -42,7 +41,31 @@ func (p *Parser) Parse() (expr ast.Expr, err error) {
 		}
 	}()
 
-	return p.expression(), nil
+	for !p.done() {
+		stmts = append(stmts, p.statement())
+	}
+
+	return stmts, nil
+}
+
+func (p *Parser) statement() ast.Stmt {
+	if p.match(token.Print) {
+		return p.printStmt()
+	}
+
+	return p.expressionStmt()
+}
+
+func (p *Parser) printStmt() ast.Stmt {
+	expr := p.expression()
+	p.consume(token.Semicolon, "Expect ';' after expression")
+	return ast.PrintStmt{Expr: expr}
+}
+
+func (p *Parser) expressionStmt() ast.Stmt {
+	expr := p.expression()
+	p.consume(token.Semicolon, "Expect ';' after expression")
+	return ast.ExprStmt{Expr: expr}
 }
 
 func (p *Parser) expression() ast.Expr {

@@ -16,19 +16,19 @@ func TestParser_Parse(t *testing.T) {
 		expect autogold.Value
 	}{
 		"Success": {
-			source: "1+2*3/(4-5)",
+			source: "1+2*3/(4-5);",
 			expect: autogold.Expect("(+ 1 (/ (* 2 3) ((- 4 5))))"),
 		},
 		"Comma": {
-			source: `"a", "b"`,
+			source: `"a", "b";`,
 			expect: autogold.Expect(`(, "a" "b")`),
 		},
 		"Conditional": {
-			source: `1 > 2 ? ":O" : ":D"`,
+			source: `1 > 2 ? ":O" : ":D";`,
 			expect: autogold.Expect(`(if (> 1 2) then ":O" else ":D")`),
 		},
 		"NestedConditional": {
-			source: `1 > 2 ? "a" : 3 > 4 ? "b" : "c"`,
+			source: `1 > 2 ? "a" : 3 > 4 ? "b" : "c";`,
 			expect: autogold.Expect(`(if (> 1 2) then "a" else (if (> 3 4) then "b" else "c"))`),
 		},
 	}
@@ -46,12 +46,17 @@ func TestParser_Parse(t *testing.T) {
 			}
 
 			parser := parser.New(tokens)
-			expr, err := parser.Parse()
+			stmts, err := parser.Parse()
 			if err != nil {
 				t.Fatal("unexpected err: ", err)
 			}
 
-			test.expect.Equal(t, ast.Print(expr))
+			node, ok := stmts[0].(ast.Node)
+			if !ok {
+				t.Fatal("unexpected statement: ", stmts[0])
+			}
+
+			test.expect.Equal(t, ast.Print(node))
 		})
 	}
 }

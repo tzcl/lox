@@ -1,34 +1,34 @@
-package interpreter_test
+package interpreter
 
 import (
 	"testing"
 
 	"github.com/hexops/autogold/v2"
 
-	"github.com/tzcl/lox/glox/internal/interpreter"
+	"github.com/tzcl/lox/glox/internal/ast"
 	"github.com/tzcl/lox/glox/internal/parser"
 	"github.com/tzcl/lox/glox/internal/scanner"
 )
 
-func TestInterpret(t *testing.T) {
+func Test_evaluate(t *testing.T) {
 	tests := map[string]struct {
 		source string
 		expect autogold.Value
 	}{
 		"Maths": {
-			source: "1+2*3/(4-5)",
+			source: "1+2*3/(4-5);",
 			expect: autogold.Expect(float64(-5)),
 		},
 		"Equality": {
-			source: "false == true == false",
+			source: "false == true == false;",
 			expect: autogold.Expect(true),
 		},
 		"NilEquals": {
-			source: "nil == nil",
+			source: "nil == nil;",
 			expect: autogold.Expect(true),
 		},
 		"NilNotEquals": {
-			source: "nil == true",
+			source: "nil == true;",
 			expect: autogold.Expect(false),
 		},
 	}
@@ -46,12 +46,17 @@ func TestInterpret(t *testing.T) {
 			}
 
 			parser := parser.New(tokens)
-			expr, err := parser.Parse()
+			stmts, err := parser.Parse()
 			if err != nil {
 				t.Fatal("unexpected err: ", err)
 			}
 
-			result, err := interpreter.Interpret(expr)
+			expr, ok := stmts[0].(ast.ExprStmt)
+			if !ok {
+				t.Fatal("unexpected statement: ", stmts[0])
+			}
+
+			result, err := evaluate(expr.Expr)
 			if err != nil {
 				t.Fatal("unexpected err: ", err)
 			}
@@ -60,17 +65,17 @@ func TestInterpret(t *testing.T) {
 	}
 }
 
-func TestInterpretError(t *testing.T) {
+func Test_evaluateError(t *testing.T) {
 	tests := map[string]struct {
 		source string
 		expect autogold.Value
 	}{
 		"InvalidOperands": {
-			source: `1+"2"`,
+			source: `1+"2";`,
 			expect: autogold.Expect("[line 1]: Error at '+': Operands must be numbers"),
 		},
 		"DivideByZero": {
-			source: "1/0",
+			source: "1/0;",
 			expect: autogold.Expect("[line 1]: Error at '/': Dividing by zero"),
 		},
 	}
@@ -88,12 +93,17 @@ func TestInterpretError(t *testing.T) {
 			}
 
 			parser := parser.New(tokens)
-			expr, err := parser.Parse()
+			stmts, err := parser.Parse()
 			if err != nil {
 				t.Fatal("unexpected err: ", err)
 			}
 
-			_, err = interpreter.Interpret(expr)
+			expr, ok := stmts[0].(ast.ExprStmt)
+			if !ok {
+				t.Fatal("unexpected statement: ", stmts[0])
+			}
+
+			_, err = evaluate(expr.Expr)
 			test.expect.Equal(t, err.Error())
 		})
 	}
