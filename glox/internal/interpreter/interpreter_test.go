@@ -59,3 +59,42 @@ func TestInterpret(t *testing.T) {
 		})
 	}
 }
+
+func TestInterpretError(t *testing.T) {
+	tests := map[string]struct {
+		source string
+		expect autogold.Value
+	}{
+		"InvalidOperands": {
+			source: `1+"2"`,
+			expect: autogold.Expect("[line 1]: Error at '+': Operands must be numbers"),
+		},
+		"DivideByZero": {
+			source: "1/0",
+			expect: autogold.Expect("[line 1]: Error at '/': Dividing by zero"),
+		},
+	}
+
+	t.Parallel()
+	for name, test := range tests {
+		test := test
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			scanner := scanner.New(test.source)
+			tokens, err := scanner.Scan()
+			if err != nil {
+				t.Fatal("unexpected err: ", err)
+			}
+
+			parser := parser.New(tokens)
+			expr, err := parser.Parse()
+			if err != nil {
+				t.Fatal("unexpected err: ", err)
+			}
+
+			_, err = interpreter.Interpret(expr)
+			test.expect.Equal(t, err.Error())
+		})
+	}
+}

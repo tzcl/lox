@@ -124,6 +124,9 @@ func binary(expr ast.BinaryExpr) (Value, error) {
 		if !ok {
 			return nil, &InterpreterError{token: expr.Operator, message: "Operands must be numbers"}
 		}
+		if right == 0 {
+			return nil, &InterpreterError{token: expr.Operator, message: "Dividing by zero"}
+		}
 		return left / right, nil
 	case token.Star:
 		left, right, ok := assertNumbers(left, right)
